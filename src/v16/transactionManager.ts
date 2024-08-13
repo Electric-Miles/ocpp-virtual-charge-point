@@ -49,15 +49,16 @@ export class TransactionManager {
     });
   }
 
-  stopTransaction(transactionId: number) {
+  stopTransaction(transactionId: number | string) {
     const transaction = this.transactions.get(transactionId.toString());
     if (transaction && transaction.meterValuesTimer) {
+      console.log(`Clearing interval for transaction ${transactionId}`);
       clearInterval(transaction.meterValuesTimer);
     }
     this.transactions.delete(transactionId.toString());
   }
 
-  getMeterValue(transactionId: number) {
+  getMeterValue(transactionId: number | string) {
     const transaction = this.transactions.get(transactionId.toString());
     if (!transaction) {
       return 0;
