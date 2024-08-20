@@ -9,6 +9,9 @@ import { simulateCharge } from "./src/simulateCharge";
 // WS_URL=ws://192.168.1.116:9000 npx ts-node index_16_load.ts
 // WS_URL=ws://192.168.1.116:9000 CP_PREFIX=VCP_ COUNT=5 npx ts-node index_16_load.ts
 
+// load test charge sessions with random start times command:
+// ws://ocpp.test.electricmiles.io CP_ID=DAN_VCP START_CHANCE=500 TEST_CHARGE=true COUNT=3 RANDOM_START=true npx ts-node index_16_load.ts
+
 const sleep = (delay: number) => new Promise((resolve) => setTimeout(resolve, delay))
 
 const idPrefix: string = process.env["CP_PREFIX"] ?? "VCP_";
@@ -17,6 +20,8 @@ const count: number = Number(process.env["COUNT"] ?? 5000);
 const vcpTimeGap: number = 500;
 const startChance: number = Number(process.env["START_CHANCE"] ?? 500);
 const testCharge: boolean = process.env["TEST_CHARGE"] === "true" ?? false;
+const duration: number = Number(process.env["CHARGE_LENGTH"] ?? 500);
+const randomStart: boolean = process.env["RANDOM_START"] == "true" ?? false;
 
 for (let i = 1; i <= count; i++) {
   const vcp = new VCP({
@@ -53,7 +58,7 @@ for (let i = 1; i <= count; i++) {
     // if TEST_CHARGE=true set in cli, start test charge
     console.log(`Test charge set: ${testCharge}`);
     if (testCharge) {
-      simulateCharge(vcp, startChance, 200);
+      simulateCharge(vcp, startChance, duration, randomStart);
     }
   })();
 }

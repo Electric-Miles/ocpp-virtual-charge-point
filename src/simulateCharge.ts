@@ -6,30 +6,20 @@ import {transactionManager} from "./v16/transactionManager";
 const sleep = (delay: number) =>
   new Promise((resolve) => setTimeout(resolve, delay));
 
-const randomIdTag = (): string => {
-  const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-    let result = '';
-    const charactersLength = characters.length;
-
-    for (let i = 0; i < 10; i++) {
-        const randomIndex = Math.floor(Math.random() * charactersLength);
-        result += characters[randomIndex];
-    }
-
-    return result;
-};
-
-export async function simulateCharge(vcp: VCP, startChance: number, duration: number) {
-  let idTag = randomIdTag()
-  await sleep(startChance);
-
+export async function simulateCharge(vcp: VCP, startChance: number, duration: number,randomStart: boolean = false) {
+  if (!randomStart) {
+    await sleep(startChance)
+  }
+  else {
+    const randomStart = Math.floor(Math.random() * startChance) * 500;
+    await sleep(randomStart);
+  }
   // initiate P&C charge session
   await vcp.sendAndWait({
     action: "StartTransaction",
     messageId: uuid.v4(),
     payload: {
       connectorId: 1,
-      // idTag: idTag, 
       idTag: 'freevenIdTag', // -> for P&C
       meterStart: parseInt(process.env["INITIAL_METER_READINGS"] ?? "0"),
       timestamp: new Date(),
@@ -60,6 +50,7 @@ export async function simulateCharge(vcp: VCP, startChance: number, duration: nu
     },
   });
   console.log("StopTransaction is sent...")
+  await sleep(500);
   await vcp.sendAndWait({
     action: "StatusNotification",
     messageId: uuid.v4(),
