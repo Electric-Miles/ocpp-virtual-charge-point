@@ -13,12 +13,12 @@ interface TransactionState {
 
 export class TransactionManager {
   transactions: Map<string, TransactionState> = new Map();
-
   startTransaction(
     vcp: VCP,
     transactionId: number,
     connectorId: number
   ) {
+    console.log(`transactionID: ${transactionId}`);
     const meterValuesTimer = setInterval(() => {
       vcp.send(
         call("MeterValues", {
@@ -39,7 +39,7 @@ export class TransactionManager {
         })
       );
     }, METER_VALUES_INTERVAL_SEC * 1000);
-    console.log(parseInt(process.env["INITIAL_METER_READINGS"] ?? '0'));
+    // console.log(parseInt(process.env["INITIAL_METER_READINGS"] ?? '0'));
     this.transactions.set(transactionId.toString(), {
       transactionId: transactionId,
       meterValue: parseInt(process.env["INITIAL_METER_READINGS"] ?? '0'),
@@ -47,6 +47,14 @@ export class TransactionManager {
       connectorId: connectorId,
       meterValuesTimer: meterValuesTimer,
     });
+
+    for (const [key, value] of this.transactions.entries()) {
+      console.log(`Key: ${key}`);
+      console.log('Value:');
+      console.log(value);
+    }
+    console.log(`transactionID: ${transactionId}`)
+  return transactionId;
   }
 
   stopTransaction(transactionId: number | string) {
@@ -63,6 +71,7 @@ export class TransactionManager {
     if (!transaction) {
       return 0;
     }
+    console.log(`transaction: ${transaction}`)
     return transaction.meterValue + (new Date().getTime() - transaction.startedAt.getTime()) / 100;
   }
 }
