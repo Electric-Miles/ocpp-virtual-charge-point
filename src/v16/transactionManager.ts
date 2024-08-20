@@ -47,12 +47,6 @@ export class TransactionManager {
       connectorId: connectorId,
       meterValuesTimer: meterValuesTimer,
     });
-
-    for (const [key, value] of this.transactions.entries()) {
-      console.log(`Key: ${key}`);
-      console.log('Value:');
-      console.log(value);
-    }
     console.log(`transactionID: ${transactionId}`)
   return transactionId;
   }
