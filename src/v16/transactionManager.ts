@@ -58,7 +58,7 @@ export class TransactionManager {
   }
 
   stopTransaction(transactionId: number | string) {
-    const transaction = this.transactions.get(transactionId.toString());
+    const transaction = this.transactions.get(transactionId.toString()) || this.transactions.entries().next().value;
     if (transaction && transaction.meterValuesTimer) {
       console.log(`Clearing interval for transaction ${transactionId}`);
       clearInterval(transaction.meterValuesTimer);

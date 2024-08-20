@@ -1,5 +1,6 @@
 import * as uuid from "uuid";
 import { VCP } from "./vcp";
+import {transactionManager} from "./v16/transactionManager";
 
 
 const sleep = (delay: number) =>
@@ -35,6 +36,7 @@ export async function simulateCharge(vcp: VCP, startChance: number, duration: nu
     },
   });
   // send charging statusNotification
+  await sleep(500)
   await vcp.sendAndWait({
     action: "StatusNotification",
     messageId: uuid.v4(),
@@ -52,7 +54,7 @@ export async function simulateCharge(vcp: VCP, startChance: number, duration: nu
     action: "StopTransaction",
     messageId: uuid.v4(),
     payload: {
-      transactionId: '-1',
+      transactionId: transactionManager.transactions.keys().next().value,
       timestamp: new Date(),
       meterStop: 2000,
     },
