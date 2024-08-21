@@ -6,12 +6,16 @@ import {transactionManager} from "./v16/transactionManager";
 const sleep = (delay: number) =>
   new Promise((resolve) => setTimeout(resolve, delay));
 
-export async function simulateCharge(vcp: VCP, startChance: number, duration: number,randomStart: boolean = false) {
-  if (!randomStart) {
-    await sleep(startChance)
+export async function simulateCharge(vcp: VCP, startChance: number, duration: number,randomDelay: boolean = false) {
+
+  if (!randomDelay) {
+    await sleep(500)
   }
   else {
-    const randomStart = Math.floor(Math.random() * startChance) * 500;
+    // if randomDelay, test charge will start between 500-120,000ms
+    const minTime = 500;
+    const maxTime = 120000;
+    const randomStart = Math.floor(Math.random() * (maxTime - minTime)) + minTime;
     await sleep(randomStart);
   }
   // initiate P&C charge session
