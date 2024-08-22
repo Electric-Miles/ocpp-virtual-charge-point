@@ -10,22 +10,21 @@ import { simulateCharge } from "./src/simulateCharge";
 // WS_URL=ws://192.168.1.116:9000 CP_PREFIX=VCP_ COUNT=5 npx ts-node index_16_load.ts
 
 // load test charge sessions with random start times command:
-// ws://ocpp.test.electricmiles.io CP_ID=VCP_ START_CHANCE=100 TEST_CHARGE=true COUNT=3 RANDOM_START=true npx ts-node index_16_load.ts
+// ws://ocpp.test.electricmiles.io CP_ID=VCP_ START_CHANCE=100 TEST_CHARGE=true COUNT=5000 RANDOM_START=true npx ts-node index_16_load.ts
+
+const sleep = (delay: number) => new Promise((resolve) => setTimeout(resolve, delay));
+const idPrefix: string = process.env["CP_PREFIX"] ?? "VCP_";
+const count: number = Number(process.env["COUNT"] ?? 5000);
+// x ms between each VCP starting up
+const vcpTimeGap: number = 500;
+const startChance: number = Number(process.env["START_CHANCE"] ?? 100);
+const testCharge: boolean = process.env["TEST_CHARGE"] === "true" ?? false;
+const duration: number = Number(process.env["DURATION"] ?? 60000);
+const randomDelay: boolean = process.env["RANDOM_DELAY"] == "true" ?? false;
 
 async function run() {
-  const sleep = (delay: number) => new Promise((resolve) => setTimeout(resolve, delay));
-  
-  const idPrefix: string = process.env["CP_PREFIX"] ?? "VCP_";
-  const count: number = Number(process.env["COUNT"] ?? 5000);
-  // x ms between each VCP starting up
-  const vcpTimeGap: number = 500;
-  const startChance: number = Number(process.env["START_CHANCE"] ?? 100);
-  const testCharge: boolean = process.env["TEST_CHARGE"] === "true" ?? false;
-  const duration: number = Number(process.env["CHARGE_LENGTH"] ?? 500);
-  const randomDelay: boolean = process.env["RANDOM_DELAY"] == "true" ?? false;
-  
-  const vcpList = [];
-  const tasks = []; // Array to hold promises
+  const vcpList: VCP[] = [];
+  const tasks: Promise<void>[] = []; // Array to hold promises
   
   for (let i = 1; i <= count; i++) {
     const vcp = new VCP({
@@ -35,7 +34,7 @@ async function run() {
     });
   
     vcpList.push(vcp);
-  
+
     const task = (async () => {
       // Start each VCP a second apart
       await sleep(i * vcpTimeGap);
@@ -61,17 +60,21 @@ async function run() {
           status: "Preparing",
         },
       });
-      // If TEST_CHARGE=true set in cli, start test charge
-      console.log(`Test charge set: ${testCharge}`);
-      if (testCharge) {
-        await simulateCharge(vcp, startChance, duration, randomDelay);
-      }
     })();
-  
     tasks.push(task);
-  
   }
+
+  // Wait for all VCPs to be connected and initialized
   await Promise.all(tasks);
+  console.log(`${vcpList.length} VCPs loaded...`)
+
+  // After all VCPs have been initialized, start the simulateCharge function concurrently for each VCP
+  if (testCharge) {
+    const chargeTasks = vcpList.map(vcp =>
+      simulateCharge(vcp, startChance, duration, randomDelay)
+    );
+    await Promise.all(chargeTasks);
+  }
 }
 
 run().catch(console.error);

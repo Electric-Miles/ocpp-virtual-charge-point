@@ -40,15 +40,19 @@ export async function simulateCharge(vcp: VCP, startChance: number = 100, durati
       status: "Charging",
     },
   });
-  // console.log(`trans Id: ${transactionId}`)
   console.log("vcp charging...")
   // send stopNotification after set duration
   await sleep(duration);
+  
+  // gets transId by VCP instance
+  let transId = transactionManager.getTransactionIdByVcp(vcp);
+  console.log(`transactionId for stopNotif : ${transId}`);
+
   await vcp.sendAndWait({
     action: "StopTransaction",
     messageId: uuid.v4(),
     payload: {
-      transactionId: transactionManager.transactions.keys().next().value,
+      transactionId: transId,
       timestamp: new Date(),
       meterStop: 2000,
     },
