@@ -6,7 +6,7 @@ import {transactionManager} from "./v16/transactionManager";
 const sleep = (delay: number) =>
   new Promise((resolve) => setTimeout(resolve, delay));
 
-export async function simulateCharge(vcp: VCP, startChance: number = 100, duration: number,randomDelay: boolean = false) {
+export async function simulateCharge(vcp: VCP, duration: number,randomDelay: boolean = false) {
   // if randomDelay, test charge will start between 500-120,000ms
   if (!randomDelay) {
     await sleep(500)

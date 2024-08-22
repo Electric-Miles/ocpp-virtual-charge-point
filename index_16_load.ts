@@ -70,9 +70,18 @@ async function run() {
 
   // After all VCPs have been initialized, start the simulateCharge function concurrently for each VCP
   if (testCharge) {
-    const chargeTasks = vcpList.map(vcp =>
-      simulateCharge(vcp, startChance, duration, randomDelay)
-    );
+    const chargeTasks = vcpList.map(vcp => {
+      // VCP performs simulateCharge based on startChance 
+      const randomChance = Math.floor(Math.random() * 100);
+      console.log(`randomChance: ${randomChance}`)
+      if (randomChance <= startChance) {
+
+        simulateCharge(vcp, duration, randomDelay);
+      }
+      else {
+        return Promise.resolve();
+      }
+  });
     await Promise.all(chargeTasks);
   }
 }
