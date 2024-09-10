@@ -20,6 +20,7 @@ const sleep = (delay: number) =>
 
 const startChance: number = Number(process.env["START_CHANCE"] ?? 500);
 const testCharge: boolean = process.env["TEST_CHARGE"] === "true" ?? false;
+const duration: number = Number(process.env["DURATION"] ?? 60000);
 
 const vcp = new VCP({
   endpoint: endpoint,
@@ -33,7 +34,7 @@ const vcp = new VCP({
 
 (async () => {
   await vcp.connect();
-  vcp.send({
+  await vcp.sendAndWait({
     messageId: uuid.v4(),
     action: "BootNotification",
     payload: {
@@ -56,6 +57,6 @@ const vcp = new VCP({
   // if TEST_CHARGE=true set in cli, start test charge
   console.log(`Test charge set: ${testCharge}`);
   if (testCharge) {
-    simulateCharge(vcp, startChance, 200);
+    simulateCharge(vcp, duration, false);
   }
 })();

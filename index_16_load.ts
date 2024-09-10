@@ -10,7 +10,7 @@ import { simulateCharge } from "./src/simulateCharge";
 // WS_URL=ws://192.168.1.116:9000 CP_PREFIX=VCP_ COUNT=5 npx ts-node index_16_load.ts
 
 // load test charge sessions with random start times command:
-// ws://ocpp.test.electricmiles.io CP_ID=VCP_ START_CHANCE=100 TEST_CHARGE=true COUNT=5000 RANDOM_START=true npx ts-node index_16_load.ts
+// WS_URL=ws://ocpp.test.electricmiles.io CP_ID=VCP_ START_CHANCE=100 TEST_CHARGE=true COUNT=5000 RANDOM_START=true npx ts-node index_16_load.ts
 
 const sleep = (delay: number) => new Promise((resolve) => setTimeout(resolve, delay));
 const idPrefix: string = process.env["CP_PREFIX"] ?? "VCP_";
@@ -27,7 +27,7 @@ async function run() {
   const tasks: Promise<void>[] = []; // Array to hold promises
   
   for (let i = 1; i <= count; i++) {
-    const vcp = new VCP({
+    let vcp = new VCP({
       endpoint: process.env["WS_URL"] ?? "ws://localhost:3000",
       chargePointId: idPrefix + i,
       ocppVersion: OcppVersion.OCPP_1_6,
@@ -35,7 +35,7 @@ async function run() {
   
     vcpList.push(vcp);
 
-    const task = (async () => {
+    let task = (async () => {
       // Start each VCP a second apart
       await sleep(i * vcpTimeGap);
       await vcp.connect();
@@ -50,7 +50,7 @@ async function run() {
         },
       });
       // Ensure backend has registered the new charger - then send status notification
-      await sleep(500);
+      await sleep(100);
       await vcp.sendAndWait({
         messageId: uuid.v4(),
         action: "StatusNotification",
@@ -75,7 +75,6 @@ async function run() {
       const randomChance = Math.floor(Math.random() * 100);
       console.log(`randomChance: ${randomChance}`)
       if (randomChance <= startChance) {
-
         simulateCharge(vcp, duration, randomDelay);
       }
       else {
