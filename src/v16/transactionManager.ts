@@ -5,7 +5,7 @@ const METER_VALUES_INTERVAL_SEC = 60;
 
 interface TransactionState {
   transactionId: number;
-  meterValue: number;  
+  meterValue: number;
   startedAt: Date;
   connectorId: number;
   meterValuesTimer?: NodeJS.Timer;
@@ -35,6 +35,11 @@ export class TransactionManager {
                   measurand: "Energy.Active.Import.Register",
                   unit: "kWh",
                 },
+                {
+                  value: "28.67",
+                  measurand: "Current.Import",
+                  unit: "A",
+                },
               ],
             },
           ],
@@ -58,7 +63,7 @@ export class TransactionManager {
     //   console.log('Value:');
     //   console.log(value);
     // }
-    TransactionManager.transactionCount++; 
+    TransactionManager.transactionCount++;
     console.log(`transaction counts: ${TransactionManager.transactionCount}`)
 
   return transactionId;

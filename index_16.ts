@@ -3,6 +3,16 @@ require("dotenv").config();
 
 import { OcppVersion } from "./src/ocppVersion";
 import { VCP } from "./src/vcp";
+import { getArgs } from './src/getArgs';
+
+const args:Record<string, any> = getArgs();
+
+const endpoint =
+    args["ENV"]
+    ? args["ENV"] === "local"
+        ? "ws://127.0.0.1:9000"
+        : `ws://ocpp.${args["ENV"]}.electricmiles.io`
+    : args["WS_URL"] ?? process.env["WS_URL"] ?? "ws://ocpp.test.electricmiles.io";
 import { simulateCharge } from "./src/simulateCharge";
 
 const sleep = (delay: number) =>
@@ -12,16 +22,18 @@ const startChance: number = Number(process.env["START_CHANCE"] ?? 500);
 const testCharge: boolean = process.env["TEST_CHARGE"] === "true" ?? false;
 
 const vcp = new VCP({
-  endpoint: process.env["WS_URL"] ?? "ws://localhost:3000",
-  chargePointId: process.env["CP_ID"] ?? "123456",
+  endpoint: endpoint,
+  chargePointId: args["CP_ID"] ?? process.env["CP_ID"] ?? "MY_CHARGER_SERIAL",
   ocppVersion: OcppVersion.OCPP_1_6,
   basicAuthPassword: process.env["PASSWORD"] ?? undefined,
-  adminWsPort: parseInt(process.env["ADMIN_PORT"] ?? "9999"),
+  adminWsPort: parseInt(
+    process.env["ADMIN_PORT"] ?? "9999"
+  ),
 });
 
 (async () => {
   await vcp.connect();
-  await vcp.sendAndWait({
+  vcp.send({
     messageId: uuid.v4(),
     action: "BootNotification",
     payload: {
