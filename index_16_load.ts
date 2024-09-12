@@ -5,6 +5,9 @@ import { OcppVersion } from "./src/ocppVersion";
 import { VCP } from "./src/vcp";
 import { simulateCharge } from "./src/simulateCharge";
 
+import { getArgs } from './src/getArgs';
+const args:Record<string, any> = getArgs();
+
 // start command:
 // WS_URL=ws://192.168.1.116:9000 npx ts-node index_16_load.ts
 // WS_URL=ws://192.168.1.116:9000 CP_PREFIX=VCP_ COUNT=5 npx ts-node index_16_load.ts
@@ -13,14 +16,21 @@ import { simulateCharge } from "./src/simulateCharge";
 // WS_URL=ws://ocpp.test.electricmiles.io CP_ID=VCP_ START_CHANCE=100 TEST_CHARGE=true COUNT=5000 RANDOM_START=true npx ts-node index_16_load.ts
 
 const sleep = (delay: number) => new Promise((resolve) => setTimeout(resolve, delay));
-const idPrefix: string = process.env["CP_PREFIX"] ?? "VCP_";
-const count: number = Number(process.env["COUNT"] ?? 5000);
+const idPrefix: string = args["CP_PREFIX"] ?? process.env["CP_PREFIX"] ?? "VCP_";
+const count: number = Number(args["COUNT"] ?? process.env["COUNT"] ?? 5000);
 // x ms between each VCP starting up
 const vcpTimeGap: number = 500;
-const startChance: number = Number(process.env["START_CHANCE"] ?? 100);
-const testCharge: boolean = process.env["TEST_CHARGE"] === "true" ?? false;
-const duration: number = Number(process.env["DURATION"] ?? 60000);
-const randomDelay: boolean = process.env["RANDOM_DELAY"] == "true" ?? false;
+const startChance: number = Number(args["START_CHANCE"] ?? process.env["START_CHANCE"] ?? 100);
+const testCharge: boolean = args["TEST_CHARGE"] ?? process.env["TEST_CHARGE"] === "true" ?? false;
+const duration: number = Number(args["DURATION"] ?? process.env["DURATION"] ?? 60000);
+const randomDelay: boolean = args["RANDOM_DELAY"] ?? process.env["RANDOM_DELAY"] == "true" ?? false;
+
+const endpoint =
+    args["ENV"]
+        ? args["ENV"] === "local"
+            ? "ws://127.0.0.1:9000"
+            : `ws://ocpp.${args["ENV"]}.electricmiles.io`
+        : args["WS_URL"] ?? process.env["WS_URL"] ?? "ws://ocpp.test.electricmiles.io";
 
 async function run() {
   const vcpList: VCP[] = [];
@@ -28,7 +38,7 @@ async function run() {
   
   for (let i = 1; i <= count; i++) {
     let vcp = new VCP({
-      endpoint: process.env["WS_URL"] ?? "ws://localhost:3000",
+      endpoint: endpoint,
       chargePointId: idPrefix + i,
       ocppVersion: OcppVersion.OCPP_1_6,
     });

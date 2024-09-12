@@ -18,9 +18,9 @@ import { simulateCharge } from "./src/simulateCharge";
 const sleep = (delay: number) =>
   new Promise((resolve) => setTimeout(resolve, delay));
 
-const startChance: number = Number(process.env["START_CHANCE"] ?? 500);
-const testCharge: boolean = process.env["TEST_CHARGE"] === "true" ?? false;
-const duration: number = Number(process.env["DURATION"] ?? 60000);
+const startChance: number = Number(args["START_CHANCE"] ?? process.env["START_CHANCE"] ?? 500);
+const testCharge: boolean = args["TEST_CHARGE"] ?? process.env["TEST_CHARGE"] === "true" ?? false;
+const duration: number = Number(args["DURATION"] ?? process.env["DURATION"] ?? 60000);
 
 const vcp = new VCP({
   endpoint: endpoint,
