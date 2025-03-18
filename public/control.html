@@ -43,6 +43,14 @@
             border: 1px solid #ccc;
             border-radius: 5px;
         }
+        select {
+            background-color: white;
+            padding: 10px;
+            width: 100%;
+            margin-top: 5px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
         button {
             background-color: #28a745;
             color: white;
@@ -88,6 +96,19 @@
         .tab-content.active {
             display: block;
         }
+
+        .hint {
+            display: inline-block;
+            font-size: 13px;
+            color: #666;
+            margin-top: 10px;
+            margin-bottom: 10px;
+        }
+        
+        .optional {
+            font-size: 13px;
+            color: #666;
+        }
     </style>
 </head>
 <body>
@@ -103,15 +124,74 @@
 
     <div id="startVCP" class="tab-content active">
         <form id="startVCPForm">
-            <label>Charge Point ID: <input type="text" id="chargePointId" value="VCP_ALAN_01" required></label>
-            <label>Count: <input type="number" id="count" value="1" required></label>
-            <label>Endpoint: <input type="text" id="endpoint" value="ws://127.0.0.1:9000" required></label>
-            <label>Start Chance: <input type="number" id="startChance" value="20" required></label>
-            <label>Test Charge: <input type="checkbox" id="testCharge" checked></label>
-            <label>Duration: <input type="number" id="duration" value="1000" required></label>
-            <label>Random Delay: <input type="checkbox" id="randomDelay" checked></label>
-            <label>Is Twin Gun: <input type="checkbox" id="isTwinGun"></label>
-            <label>OCPP Version: <input type="text" id="ocppVersion" value="OCPP_1.6" required></label>
+            <label>
+                Charge Point ID <span class="optional">(optional)</span>
+                <input type="text" id="chargePointId" value="VCP_ALAN_01">
+                <span class="hint">Required if ID prefix is not provided.</span>
+            </label>
+            
+            <label>
+                ID Prefix <span class="optional">(optional)</span>
+                <input type="text" id="idPrefix" value="VCP_TEST_">
+                <span class="hint">Required if charge point ID is not provided.</span>
+            </label>
+
+            <label>
+                Count <span class="optional">(optional)</span>
+                <input type="number" id="count" value="1" min="1">
+                <span class="hint">Required if ID prefix is provided.</span>
+            </label>
+
+            <label>
+                Endpoint:
+                <select id="endpoint" required>
+                    <option value="ws://127.0.0.1:9000">ws://127.0.0.1:9000</option>
+                    <option value="ws://ocpp.test.electricmiles.io">ws://ocpp.test.electricmiles.io</option>
+                    <option value="ws://ocpp.stage1.electricmiles.io">ws://ocpp.stage1.electricmiles.io</option>
+                    <option value="ws://ocpp.stage2.electricmiles.io">ws://ocpp.stage2.electricmiles.io</option>
+                    <option value="ws://ocpp.stage3.electricmiles.io">ws://ocpp.stage3.electricmiles.io</option>
+                    <option value="ws://ocpp.electricmiles.io">ws://ocpp.electricmiles.io</option>
+                </select>
+            </label>
+
+            <label>
+                Start Chance <span class="optional">(optional)</span>
+                <input type="number" id="startChance" value="20" min="1">
+                <span class="hint">Required when starting multiple VCPs.</span>
+            </label>
+
+            <label>
+                Test Charge <span class="optional">(optional)</span>
+                <input type="checkbox" id="testCharge" checked>
+            </label>
+            
+            <label>Duration: <input type="number" id="duration" value="1000" min="1" required></label>
+
+            <label>
+                Random Delay <span class="optional">(optional)</span>
+                <input type="checkbox" id="randomDelay" checked>
+                <span class="hint">Required when starting multiple VCPs.</span>
+            </label>
+
+            <label>
+                Is Twin Gun <span class="optional">(optional)</span>
+                <input type="checkbox" id="isTwinGun">
+            </label>
+
+            <label>
+                sleep Time <span class="optional">(optional)</span>
+                <input type="number" id="sleepTime" value="500" min="500">
+                <span class="hint">Required when is twin gun.</span>
+            </label>
+            
+            <label>
+                OCPP Version
+                <select id="ocppVersion" required>
+                    <option value="OCPP_1.6">OCPP_1.6</option>
+                    <option value="OCPP_2.0.1">OCPP_2.0.1</option>
+                </select>
+            </label>
+            
             <button type="submit">Start</button>
         </form>
 
@@ -141,6 +221,7 @@
     <h2>Response</h2>
     <pre id="response"></pre>
 </div>
+
 <script>
     function openTab(event, tabId) {
         document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
@@ -162,8 +243,10 @@
 
     document.getElementById('startVCPForm').addEventListener('submit', function(event) {
         event.preventDefault();
+
         sendRequest('/api/vcp/start', 'POST', {
             chargePointId: document.getElementById('chargePointId').value,
+            idPrefix: document.getElementById('idPrefix').value,
             count: Number(document.getElementById('count').value),
             endpoint: document.getElementById('endpoint').value,
             startChance: Number(document.getElementById('startChance').value),
@@ -171,6 +254,7 @@
             duration: Number(document.getElementById('duration').value),
             randomDelay: document.getElementById('randomDelay').checked,
             isTwinGun: document.getElementById('isTwinGun').checked,
+            sleepTime: Number(document.getElementById('sleepTime').value),
             ocppVersion: document.getElementById('ocppVersion').value
         });
     });

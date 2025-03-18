@@ -19,7 +19,6 @@ export const startVcp = async (
 ) => {
   const payload = request.body;
 
-  // if count is greater than 1, require idPrefix
   if (payload.chargePointId) {
     startSingleVcp(payload);
 
