@@ -45,13 +45,16 @@ export const stopVcp = async (
   if (!vcpId && !vcpIdPrefix) {
     vcpList = [];
 
-    reply.send({ status: "sucess", message: "All VCPs stopped" });
+    return reply.send({ status: "sucess", message: "All VCPs stopped" });
   }
 
   if (vcpId) {
     vcpList = vcpList.filter((vcp) => vcp.vcpOptions.chargePointId !== vcpId);
 
-    reply.send({ status: "sucess", message: `VCP with ID: ${vcpId} stopped` });
+    return reply.send({
+      status: "sucess",
+      message: `VCP with ID: ${vcpId} stopped`,
+    });
   }
 
   if (vcpIdPrefix) {
@@ -59,7 +62,7 @@ export const stopVcp = async (
       (vcp) => !vcp.vcpOptions.chargePointId.startsWith(vcpIdPrefix),
     );
 
-    reply.send({
+    return reply.send({
       status: "sucess",
       message: `VCPs with ID prefix: ${vcpIdPrefix} stopped`,
     });
@@ -86,7 +89,7 @@ export const changeVcpStatus = async (
     payload,
   });
 
-  reply.send({ status: "sucess", message: "Status updated" });
+  return reply.send({ status: "sucess", message: "Status updated" });
 };
 
 export const getVcpStatus = async (
@@ -120,7 +123,7 @@ export const getVcpStatus = async (
     response.push({ meta: { count: data.length } });
   }
 
-  reply.send({ status: "sucess", data: response });
+  return reply.send({ status: "sucess", data: response });
 };
 
 async function startMultipleVcps(payload: StartVcpRequestSchema) {
