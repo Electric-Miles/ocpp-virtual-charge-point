@@ -58,7 +58,7 @@
             cursor: pointer;
         }
         button:hover {
-            background-color: #218838;
+            background-color: #945EFF;
         }
         pre {
             background: black;
@@ -200,11 +200,35 @@
     <div id="changeStatus" class="tab-content">
         <form id="changeStatusForm">
             <label>Charge Point ID: <input type="text" id="statusChargePointId" value="VCP_ALAN_01" required></label>
-            <label>Connector ID: <input type="number" id="connectorId" value="1" required></label>
-            <label>Status: <input type="text" id="status" value="Charging" required></label>
+            
+            <label>connectorId: <input type="number" id="connectorId" value="1" min="1" required></label>
+
+            <label>
+                Status:
+                <select id="status" required>
+                    <option value="Available">Available</option>
+                    <option value="Charging">Charging</option>
+                    <option value="Faulted">Faulted</option>
+                    <option value="Finishing">Finishing</option>
+                    <option value="Preparing">Preparing</option>
+                    <option value="Reserved">Reserved</option>
+                    <option value="SuspendedEV">SuspendedEV</option>
+                    <option value="SuspendedEVSE">SuspendedEVSE</option>
+                </select>
+            </label>
+            
+            <label>
+                error Code:
+                <select id="errorCode" required>
+                    <option value="NoError">NoError</option>
+                    <option value="InternalError">InternalError</option>
+                    <option value="EVCommunicationError">EVCommunicationError</option>
+                    <option value="PeakWait">PeakWait</option>
+                </select>
+            </label>
+
             <button type="submit">Change Status</button>
         </form>
-
     </div>
 
     <div id="stopVCP" class="tab-content">
@@ -272,13 +296,14 @@
 
     document.getElementById('changeStatusForm').addEventListener('submit', function(event) {
         event.preventDefault();
+
         sendRequest('/api/vcp/change-status', 'POST', {
             chargePointId: document.getElementById('statusChargePointId').value,
             action: "StatusNotification",
             payload: {
                 connectorId: Number(document.getElementById('connectorId').value),
                 status: document.getElementById('status').value,
-                errorCode: "NoError",
+                errorCode: document.getElementById('errorCode').value,
             }
         });
     });
