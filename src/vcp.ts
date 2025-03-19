@@ -244,4 +244,15 @@ export class VCP {
     logger.info(`Connection closed. code=${code}, reason=${reason}`);
     process.exit();
   }
+
+  disconnect() {
+    if (!this.ws) {
+      throw new Error(
+        "Trying to close a Websocket that was not opened. Call connect() first",
+      );
+    }
+
+    this.isFinishing = true;
+    this.ws.close();
+  }
 }

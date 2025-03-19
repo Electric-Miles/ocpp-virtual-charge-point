@@ -43,13 +43,33 @@ export const stopVcp = async (
   const { vcpId, vcpIdPrefix } = request.body;
 
   if (!vcpId && !vcpIdPrefix) {
-    vcpList = [];
+    for (let index = 0; index < vcpList.length; index++) {
+      const vcp = vcpList[index];
+
+      vcp.disconnect();
+
+      delete vcpList[index];
+    }
 
     return reply.send({ status: "sucess", message: "All VCPs stopped" });
   }
 
   if (vcpId) {
-    vcpList = vcpList.filter((vcp) => vcp.vcpOptions.chargePointId !== vcpId);
+    const vcp = vcpList.find((vcp) => vcp.vcpOptions.chargePointId === vcpId);
+
+    if (!vcp) {
+      return reply.send({ status: "error", message: "VCP not found" });
+    }
+
+    console.log("hetre");
+
+    vcp.disconnect();
+
+    const vcpIndex = vcpList.findIndex(
+      (vcp) => vcp.vcpOptions.chargePointId === vcpId,
+    );
+
+    delete vcpList[vcpIndex];
 
     return reply.send({
       status: "sucess",
@@ -58,9 +78,21 @@ export const stopVcp = async (
   }
 
   if (vcpIdPrefix) {
-    vcpList = vcpList.filter(
-      (vcp) => !vcp.vcpOptions.chargePointId.startsWith(vcpIdPrefix),
-    );
+    const vcps = vcpList.filter((vcp, index, vcpList) => {
+      if (vcp.vcpOptions.chargePointId.startsWith(vcpIdPrefix)) {
+        delete vcpList[index];
+
+        return true;
+      }
+
+      return false;
+    });
+
+    for (let index = 0; index < vcps.length; index++) {
+      const vcp = vcps[index];
+
+      vcp.disconnect();
+    }
 
     return reply.send({
       status: "sucess",
