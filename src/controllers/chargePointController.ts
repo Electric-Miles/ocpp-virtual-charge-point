@@ -61,8 +61,6 @@ export const stopVcp = async (
       return reply.send({ status: "error", message: "VCP not found" });
     }
 
-    console.log("hetre");
-
     vcp.disconnect();
 
     const vcpIndex = vcpList.findIndex(
