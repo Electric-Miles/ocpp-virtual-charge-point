@@ -126,38 +126,38 @@
         <form id="startVCPForm">
             <label>
                 Charge Point ID <span class="optional">(optional)</span>
-                <input type="text" id="chargePointId" value="VCP_ALAN_01">
+                <input type="text" id="chargePointId" placeholder="VCP_ALAN_01">
                 <span class="hint">Required if ID prefix is not provided.</span>
             </label>
             
             <label>
                 ID Prefix <span class="optional">(optional)</span>
-                <input type="text" id="idPrefix" value="VCP_TEST_">
+                <input type="text" id="idPrefix" placeholder="VCP_TEST_">
                 <span class="hint">Required if charge point ID is not provided.</span>
             </label>
 
             <label>
                 Count <span class="optional">(optional)</span>
-                <input type="number" id="count" value="1" min="1">
+                <input type="number" id="count" min="1">
                 <span class="hint">Required if ID prefix is provided.</span>
             </label>
 
             <label>
                 Endpoint:
                 <select id="endpoint" required>
-                    <option value="ws://127.0.0.1:9000">ws://127.0.0.1:9000</option>
-                    <option value="ws://ocpp.test.electricmiles.io">ws://ocpp.test.electricmiles.io</option>
-                    <option value="ws://ocpp.stage1.electricmiles.io">ws://ocpp.stage1.electricmiles.io</option>
-                    <option value="ws://ocpp.stage2.electricmiles.io">ws://ocpp.stage2.electricmiles.io</option>
-                    <option value="ws://ocpp.stage3.electricmiles.io">ws://ocpp.stage3.electricmiles.io</option>
-                    <option value="ws://ocpp.electricmiles.io">ws://ocpp.electricmiles.io</option>
-                    <option value="ws://ocpp.monta.app">ws://ocpp.monta.app</option>
+                    <option value="ws://ocpp.test.electricmiles.io">Test</option>
+                    <option value="ws://127.0.0.1:9000">Local</option>
+                    <option value="ws://ocpp.stage1.electricmiles.io">Stage 1</option>
+                    <option value="ws://ocpp.stage2.electricmiles.io">Stage 2</option>
+                    <option value="ws://ocpp.stage3.electricmiles.io">Stage 3</option>
+                    <option value="ws://ocpp.electricmiles.io">Production</option>
+                    <option value="ws://ocpp.monta.app">Monta</option>
                 </select>
             </label>
 
             <label>
                 Start Chance <span class="optional">(optional)</span>
-                <input type="number" id="startChance" value="20" min="1">
+                <input type="number" id="startChance" placeholder="20" min="1">
                 <span class="hint">Required when starting multiple VCPs.</span>
             </label>
 
@@ -181,7 +181,7 @@
 
             <label>
                 sleep Time <span class="optional">(optional)</span>
-                <input type="number" id="sleepTime" value="500" min="500">
+                <input type="number" id="sleepTime" placeholder="500" min="500">
                 <span class="hint">Required when is twin gun.</span>
             </label>
             
@@ -199,7 +199,7 @@
 
     <div id="changeStatus" class="tab-content">
         <form id="changeStatusForm">
-            <label>Charge Point ID: <input type="text" id="statusChargePointId" value="VCP_ALAN_01" required></label>
+            <label>Charge Point ID: <input type="text" id="statusChargePointId" placeholder="VCP_ALAN_01" required></label>
             
             <label>connectorId: <input type="number" id="connectorId" value="1" min="1" required></label>
 
@@ -235,12 +235,12 @@
         <form id="stopVCPForm">
             <label>
                 VCP ID <span class="optional">(optional)</span>
-                <input type="text" id="vcpId" value="VCP_ALAN_01">
+                <input type="text" id="vcpId" placeholder="VCP_ALAN_01">
             </label>
             
             <label>
                 VCP ID Prefix <span class="optional">(optional)</span>
-                <input type="text" id="vcpIdPrefix" value="VCP_TEST_">
+                <input type="text" id="vcpIdPrefix" placeholder="VCP_TEST_">
             </label>
 
             <p class="hint">If neither VCP ID nor VCP ID prefix is provided, all running VCPs will be stopped.</p>
@@ -258,6 +258,15 @@
 </div>
 
 <script>
+    window.addEventListener('load', (event) => {
+        const chargePointId = localStorage.getItem('chargePointId')
+        const idPrefix = localStorage.getItem('idPrefix')
+
+        document.getElementById('statusChargePointId').value = chargePointId ?? idPrefix
+        document.getElementById('vcpId').value = chargePointId
+        document.getElementById('vcpIdPrefix').value = idPrefix
+    })
+
     function openTab(event, tabId) {
         document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
         document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
@@ -279,9 +288,20 @@
     document.getElementById('startVCPForm').addEventListener('submit', function(event) {
         event.preventDefault();
 
+        const chargePointId = document.getElementById('chargePointId').value
+        const idPrefix = document.getElementById('idPrefix').value
+
+        if (chargePointId) {
+            localStorage.setItem('chargePointId', chargePointId)
+        }
+        
+        if (idPrefix) {
+            localStorage.setItem('idPrefix', idPrefix)
+        }
+
         sendRequest('/api/vcp/start', 'POST', {
-            chargePointId: document.getElementById('chargePointId').value,
-            idPrefix: document.getElementById('idPrefix').value,
+            chargePointId,
+            idPrefix,
             count: Number(document.getElementById('count').value),
             endpoint: document.getElementById('endpoint').value,
             startChance: Number(document.getElementById('startChance').value),
