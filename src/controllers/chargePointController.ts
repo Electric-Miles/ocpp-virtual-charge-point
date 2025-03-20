@@ -31,7 +31,7 @@ export const startVcp = async (
 
     return reply.send({
       status: "sucess",
-      message: `${vcpList.length} VCPs started`,
+      message: `${payload.count} VCPs started`,
     });
   }
 };
