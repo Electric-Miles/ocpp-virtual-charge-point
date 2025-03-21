@@ -20,6 +20,17 @@ export const startVcp = async (
   const payload = request.body;
 
   if (payload.chargePointId) {
+    const vcpWithChargePointId = vcpList.find(
+      (vcp) => vcp.vcpOptions.chargePointId === payload.chargePointId,
+    );
+
+    if (vcpWithChargePointId) {
+      return reply.send({
+        status: "error",
+        message: `VCP with ${payload.chargePointId} already started`,
+      });
+    }
+
     startSingleVcp(payload);
 
     return reply.send({
@@ -27,6 +38,17 @@ export const startVcp = async (
       message: `VCP with ${payload.chargePointId} started`,
     });
   } else {
+    const vcpWithIdPrefix = vcpList.find((vcp) =>
+      vcp.vcpOptions.chargePointId.startsWith(payload.idPrefix!),
+    );
+
+    if (vcpWithIdPrefix) {
+      return reply.send({
+        status: "error",
+        message: `VCPs with ${payload.idPrefix} already started`,
+      });
+    }
+
     startMultipleVcps(payload);
 
     return reply.send({
