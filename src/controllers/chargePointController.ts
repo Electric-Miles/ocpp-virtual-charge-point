@@ -152,24 +152,28 @@ export const getVcpStatus = async (
   let response: any[] = [];
 
   if (verbose) {
-    response = vcpList.map((vcp: VCP) => {
-      return {
-        isFinishing: vcp.isFinishing,
-        isWaiting: vcp.isWaiting,
-        lastAction: vcp.lastAction,
-        connectorIDs: vcp.connectorIDs,
-        status: vcp.status,
-        ...vcp.vcpOptions,
-      };
-    });
+    response = vcpList
+      .map((vcp: VCP) => {
+        return {
+          isFinishing: vcp.isFinishing,
+          isWaiting: vcp.isWaiting,
+          lastAction: vcp.lastAction,
+          connectorIDs: vcp.connectorIDs,
+          status: vcp.status,
+          ...vcp.vcpOptions,
+        };
+      })
+      .filter((vcp: any) => vcp !== null);
   } else {
-    const data = vcpList.map((vcp: VCP) => {
-      return {
-        chargePointId: vcp.vcpOptions.chargePointId,
-        status: vcp.status,
-        endpoint: vcp.vcpOptions.endpoint,
-      };
-    });
+    const data = vcpList
+      .map((vcp: VCP) => {
+        return {
+          chargePointId: vcp.vcpOptions.chargePointId,
+          status: vcp.status,
+          endpoint: vcp.vcpOptions.endpoint,
+        };
+      })
+      .filter((vcp: any) => vcp !== null);
 
     response.push(data);
     response.push({ meta: { count: data.length } });
