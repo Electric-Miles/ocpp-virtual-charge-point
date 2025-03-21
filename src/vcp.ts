@@ -28,18 +28,20 @@ export class VCP {
   private ws?: WebSocket;
   private adminWs?: WebSocketServer;
   private messageHandler: OcppMessageHandler;
-  private isFinishing: boolean = false;
-  private isWaiting: boolean = false;
-  private lastAction: string = '';
+  public isFinishing: boolean = false;
+  public isWaiting: boolean = false;
+  public lastAction: string = "";
   public isTwinGun: boolean = false;
   public connectorIDs: number[];
+  public status: string;
 
-  constructor(private vcpOptions: VCPOptions) {
+  constructor(public vcpOptions: VCPOptions) {
     this.messageHandler = resolveMessageHandler(vcpOptions.ocppVersion);
-    
+
     this.vcpOptions.isTwinGun = this.vcpOptions.isTwinGun ?? false;
     this.isTwinGun = this.vcpOptions.isTwinGun ?? false;
     this.connectorIDs = this.initializeConnectorIDs();
+    this.status = "Available";
 
     if (vcpOptions.adminWsPort) {
       this.adminWs = new WebSocketServer({
@@ -50,9 +52,9 @@ export class VCP {
           this.send(JSON.parse(data));
         });
       });
-      this.adminWs.on('error', (error) => {
-        logger.error("Admin WebSocketServer Error: "+error);
-      })
+      this.adminWs.on("error", (error) => {
+        logger.error("Admin WebSocketServer Error: " + error);
+      });
     }
   }
 
@@ -60,8 +62,7 @@ export class VCP {
     logger.info(`Connecting... | ${util.inspect(this.vcpOptions)}`);
     this.isFinishing = false;
     return new Promise((resolve) => {
-      const websocketUrl =
-        `${this.vcpOptions.endpoint}/${this.vcpOptions.chargePointId}`;
+      const websocketUrl = `${this.vcpOptions.endpoint}/${this.vcpOptions.chargePointId}`;
       const protocol = toProtocolVersion(this.vcpOptions.ocppVersion);
       this.ws = new WebSocket(websocketUrl, [protocol], {
         rejectUnauthorized: false,
@@ -79,9 +80,8 @@ export class VCP {
       this.ws.on("pong", () => {
         logger.info("Received PONG");
       });
-      this.ws.on(
-        "close",
-        (code: number, reason: string) => this._onClose(code, reason),
+      this.ws.on("close", (code: number, reason: string) =>
+        this._onClose(code, reason),
       );
     });
   }
@@ -99,7 +99,9 @@ export class VCP {
     ]);
 
     if (ocppCall.action !== "Heartbeat") {
-      logger.info(`➡️  Sending ${this.vcpOptions.chargePointId} ${ocppCall.action} ${jsonMessage}`);
+      logger.info(
+        `➡️  Sending ${this.vcpOptions.chargePointId} ${ocppCall.action} ${jsonMessage}`,
+      );
     }
     validateOcppRequest(
       this.vcpOptions.ocppVersion,
@@ -107,6 +109,11 @@ export class VCP {
       JSON.parse(JSON.stringify(ocppCall.payload)),
     );
     this.lastAction = ocppCall.action;
+
+    if (ocppCall.action === "StatusNotification") {
+      this.status = ocppCall.payload.status;
+    }
+
     this.ws.send(jsonMessage);
   }
 
@@ -114,15 +121,15 @@ export class VCP {
     if (this.isWaiting) {
       // wait till isWaiting is false
       const self = this;
-        await new Promise((resolve) => {
-            const interval = setInterval(() => {
-              //logger.info('waiting');
-              if (!self.isWaiting) {
-                  clearInterval(interval);
-                  this.sendAndWait(ocppCall);
-              }
-            }, 100);
-        });
+      await new Promise((resolve) => {
+        const interval = setInterval(() => {
+          //logger.info('waiting');
+          if (!self.isWaiting) {
+            clearInterval(interval);
+            this.sendAndWait(ocppCall);
+          }
+        }, 100);
+      });
     } else {
       this.isWaiting = true;
       this.send(ocppCall);
@@ -188,10 +195,10 @@ export class VCP {
 
   private _onMessage(message: string) {
     this.isWaiting = false;
-    if (this.lastAction !== 'Heartbeat') {
-      logger.info(`⬅️  Receive ${this .vcpOptions.chargePointId} ${message}`);
+    if (this.lastAction !== "Heartbeat") {
+      logger.info(`⬅️  Receive ${this.vcpOptions.chargePointId} ${message}`);
     } else {
-      this.lastAction = '';
+      this.lastAction = "";
     }
     const data = JSON.parse(message);
     const [type, ...rest] = data;
@@ -236,5 +243,16 @@ export class VCP {
     }
     logger.info(`Connection closed. code=${code}, reason=${reason}`);
     process.exit();
+  }
+
+  disconnect() {
+    if (!this.ws) {
+      throw new Error(
+        "Trying to close a Websocket that was not opened. Call connect() first",
+      );
+    }
+
+    this.isFinishing = true;
+    this.ws.close();
   }
 }
