@@ -5,15 +5,19 @@
   "scripts": {
     "build": "rimraf ./build && tsc && cp .env ./build && cp -r ./public ./build",
     "build:win": "powershell -Command \"Remove-Item -Recurse -Force .\\build; tsc; Copy-Item .env -Destination .\\build; Copy-Item -Recurse .\\public -Destination .\\build\"",
-    "dev": "npx nodemon",
+    "dev": "tsx watch src/index.ts",
     "start": "node build/src/index.js"
   },
   "author": "Solidstudio",
   "license": "Apache-2.0",
   "dependencies": {
+    "@fastify/auth": "^5.0.2",
+    "@fastify/cookie": "^11.0.2",
+    "@fastify/jwt": "^9.1.0",
     "ajv": "^6.12.6",
     "dotenv": "^16.0.0",
     "fastify": "^5.2.1",
+    "fastify-plugin": "^5.0.1",
     "prettier": "^3.5.1",
     "rimraf": "^6.0.1",
     "typescript": "^5.8.2",
@@ -25,7 +29,7 @@
     "@types/node": "^22.13.2",
     "@types/uuid": "^8.3.4",
     "@types/ws": "^8.2.2",
-    "nodemon": "^3.1.9",
-    "ts-node": "^10.9.1"
+    "ts-node": "^10.9.1",
+    "tsx": "^4.19.3"
   }
 }
