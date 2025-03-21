@@ -309,7 +309,10 @@
     async function sendRequest(url, method, body = null) {
         const options = {
             method,
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${localStorage.getItem('vcp_access_token')}`
+            },
             body: body ? JSON.stringify(body) : null
         };
         const response = await fetch(url, options);
