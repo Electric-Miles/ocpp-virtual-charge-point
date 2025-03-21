@@ -109,11 +109,30 @@
             font-size: 13px;
             color: #666;
         }
+
+        .flex {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .btn {
+            width: auto;
+            background-color: #666;
+            padding: 5px;
+        }
     </style>
 </head>
 <body>
 <div class="container">
-    <h1>Virtual Charge Point Control</h1>
+    <div class="flexd">
+        <h1>Virtual Charge Point Control</h1>
+
+        <div class="nav">
+            <div id="first_name"></div>
+            <button class="btn" onclick="logout()">Log out</button>
+        </div>
+    </div>
 
     <div class="tabs">
         <div class="tab active" onclick="openTab(event, 'startVCP')">Start VCPs</div>
@@ -259,6 +278,23 @@
 
 <script>
     window.addEventListener('load', (event) => {
+        fetch('/api/auth/user', {
+            method: 'GET',
+            headers: { 
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${localStorage.getItem('vcp_access_token')}`
+            },
+        })
+            .then(response => response.json())
+            .then(data => {
+                console.log(data)
+               if (data.status !== 'success') {
+                   window.location.href = '/login'
+               } else {
+                   document.getElementById('first_name').textContent = data.data.first_name
+               }
+            })
+
         const chargePointId = localStorage.getItem('chargePointId')
         const idPrefix = localStorage.getItem('idPrefix')
 
@@ -339,6 +375,12 @@
 
     function getVCPStatus() {
         sendRequest('/api/vcp/status?verbose=true', 'GET');
+    }
+    
+    function logout() {
+        localStorage.removeItem('vcp_access_token')
+
+        window.location.href = '/login';
     }
 </script>
 </body>

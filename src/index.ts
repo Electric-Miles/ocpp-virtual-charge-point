@@ -15,7 +15,6 @@ import {
 import fs from "fs";
 import { authRoutes } from "./routes/auth";
 import fastifyJwt from "@fastify/jwt";
-import fastifyCookie from "@fastify/cookie";
 import fastifyAuth from "@fastify/auth";
 
 const app = fastify({
@@ -25,18 +24,7 @@ const app = fastify({
 const host = process.env.HOST || "0.0.0.0";
 const port = Number(process.env.PORT) || 3000;
 
-app.register(fastifyJwt, {
-  secret: "secret",
-  cookie: {
-    cookieName: "vcp_access_token",
-    signed: true,
-  },
-});
-
-app.register(fastifyCookie, {
-  secret: "some-secret-key",
-  // hook: "preHandler",
-});
+app.register(fastifyJwt, { secret: process.env.JWT_SECRET || "secret" });
 
 app
   .decorate(
@@ -89,7 +77,7 @@ app
 
     app.get(
       "/control",
-      { preHandler: app.auth([app.verifyJwt]) },
+      // { preHandler: app.auth([app.verifyJwt]) },
       async (request, reply) => {
         const stream = fs.readFileSync("./public/control.html").toString();
 

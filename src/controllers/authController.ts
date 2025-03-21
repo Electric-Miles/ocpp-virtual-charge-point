@@ -2,7 +2,7 @@ import { FastifyRequest, FastifyReply } from "fastify";
 import { LoginRequestSchema } from "../schema";
 
 const users = {
-  password: "P@55W0rd0!!", // TODO: read from env
+  password: process.env.USERS_PASSWORD,
   users: [
     {
       first_name: "Chimezie",
@@ -42,12 +42,6 @@ export const login = async (
 
   const token = await reply.jwtSign(user);
 
-  reply.setCookie("vcp_access_token", token, {
-    path: "/",
-    secure: true,
-    httpOnly: true,
-  });
-
   return reply.send({
     status: "success",
     message: "Logged in successfully",
@@ -57,8 +51,10 @@ export const login = async (
   });
 };
 
-export async function logout(request: FastifyRequest, reply: FastifyReply) {
-  reply.clearCookie("access_token");
-
-  return reply.send({ status: "success", message: "Logged out successfully" });
+export async function user(request: FastifyRequest, reply: FastifyReply) {
+  return reply.send({
+    status: "success",
+    message: "User retrieved successfully",
+    data: request.user,
+  });
 }
