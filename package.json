@@ -17,7 +17,6 @@
     "ajv": "^6.12.6",
     "dotenv": "^16.0.0",
     "fastify": "^5.2.1",
-    "fastify-plugin": "^5.0.1",
     "prettier": "^3.5.1",
     "rimraf": "^6.0.1",
     "typescript": "^5.8.2",

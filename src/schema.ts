@@ -98,3 +98,17 @@ export const StatusValidationSchema = {
 export interface StatusRequestSchema {
   verbose: boolean;
 }
+
+export const LoginValidationSchema = {
+  type: "object",
+  required: ["email", "password"],
+  properties: {
+    email: { type: "string", format: "email" },
+    password: { type: "string" },
+  },
+};
+
+export interface LoginRequestSchema {
+  email: string;
+  password: string;
+}
