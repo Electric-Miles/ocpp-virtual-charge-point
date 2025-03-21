@@ -116,23 +116,19 @@
             align-items: center;
         }
 
-        .btn {
-            width: auto;
-            background-color: #666;
-            padding: 5px;
+        .logout {
+            color: #333;
         }
     </style>
 </head>
 <body>
 <div class="container">
-    <div class="flexd">
-        <h1>Virtual Charge Point Control</h1>
+    <h1>Virtual Charge Point Control</h1>
 
-        <div class="nav">
-            <div id="first_name"></div>
-            <button class="btn" onclick="logout()">Log out</button>
-        </div>
-    </div>
+    <p>
+        Hi <span id="first_name"></span>, 
+        <a href="#" class="logout" id="logout">Log out</a>
+    </p>
 
     <div class="tabs">
         <div class="tab active" onclick="openTab(event, 'startVCP')">Start VCPs</div>
@@ -376,12 +372,13 @@
     function getVCPStatus() {
         sendRequest('/api/vcp/status?verbose=true', 'GET');
     }
-    
-    function logout() {
+    document.getElementById('logout').addEventListener('click', (event) => {
+        event.preventDefault();
+        
         localStorage.removeItem('vcp_access_token')
 
         window.location.href = '/login';
-    }
+    });
 </script>
 </body>
 </html>
