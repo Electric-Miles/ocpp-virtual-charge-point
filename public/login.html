@@ -11,9 +11,11 @@
 <body>
 <body class="bg-[#f4f4f4] min-h-full flex flex-col">
     <div class="flex-1">
-        <div class="max-w-screen-lg mx-auto p-5">
+        <div class="max-w-2xl mx-auto p-5">
             <div class="p-5 bg-white rounded-lg shadow-sm">
-                <h1 class="text-3xl">Log in</h1>
+                <h1 class="text-3xl mb-2">Log in</h1>
+
+                <div id="message"></div>
 
                 <form id="loginForm" class="mt-5 space-y-4">
                     <div>
@@ -53,7 +55,12 @@
 
                 window.location.href = '/control';
             } else {
-                console.log('Login failed: ' + data.message);
+                // class="alert alert-error alert-soft"
+                const messageBox = document.getElementById('message')
+
+                messageBox.classList.add('alert', 'alert-error', 'alert-soft')
+                messageBox.textContent = data.message
+                console.log(`Login failed: ${data.message}`);
             }
         })
         .catch(error => {
