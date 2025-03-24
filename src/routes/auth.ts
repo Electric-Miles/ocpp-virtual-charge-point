@@ -5,9 +5,7 @@ import { LoginValidationSchema } from "../schema";
 
 export async function authRoutes(app: FastifyInstance) {
   app.get("/login", async (request, reply) => {
-    const stream = fs.readFileSync("./public/login.html").toString();
-
-    reply.type("text/html").send(stream);
+    return reply.sendFile("login.html");
   });
 
   app.post(

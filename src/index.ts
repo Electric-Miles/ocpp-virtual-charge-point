@@ -5,6 +5,8 @@ import { authRoutes } from "./routes/auth";
 import fastifyJwt from "@fastify/jwt";
 import fastifyAuth from "@fastify/auth";
 import { chargePointRoutes } from "./routes/charge-point";
+import fastifyStatic from "@fastify/static";
+import path from "path";
 
 const app = fastify({
   logger: true,
@@ -12,6 +14,10 @@ const app = fastify({
 
 const host = process.env.HOST || "0.0.0.0";
 const port = Number(process.env.PORT) || 3000;
+
+app.register(fastifyStatic, {
+  root: path.join(__dirname, "../public"),
+});
 
 app.register(fastifyJwt, { secret: process.env.JWT_SECRET || "secret" });
 
@@ -32,9 +38,7 @@ app
     app.register(authRoutes);
 
     app.get("/control", async (request, reply) => {
-      const stream = fs.readFileSync("./public/control.html").toString();
-
-      reply.type("text/html").send(stream);
+      return reply.sendFile("control.html");
     });
   });
 
