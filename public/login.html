@@ -1,127 +1,35 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="h-full">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Virtual Charge Point - Login</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f4f4f4;
-            margin: 0;
-            padding: 0;
-            display: flex;
-            justify-content: center;
-        }
-        .container {
-            width: 60%;
-            background: white;
-            padding: 20px;
-            margin: 20px;
-            border-radius: 8px;
-            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
-        }
-        h1, h2 {
-            color: #333;
-        }
-        form {
-            background: #f9f9f9;
-            padding: 15px;
-            margin-bottom: 20px;
-            border-radius: 8px;
-            box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.1);
-        }
-        label {
-            display: block;
-            margin: 10px 0;
-        }
-        input, button {
-            padding: 10px;
-            width: 100%;
-            margin-top: 5px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-        }
-        select {
-            background-color: white;
-            padding: 10px;
-            width: 100%;
-            margin-top: 5px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-        }
-        button {
-            background-color: #945EFF;
-            color: white;
-            border: none;
-            cursor: pointer;
-        }
-        button:hover {
-            background-color: #945EFF;
-        }
-        pre {
-            background: black;
-            color: limegreen;
-            padding: 10px;
-            border-radius: 5px;
-            overflow-x: auto;
-        }
-
-        .tabs {
-            display: flex;
-            border-bottom: 2px solid #ddd;
-        }
-        .tab {
-            padding: 10px 20px;
-            cursor: pointer;
-            border: 1px solid #ddd;
-            border-bottom: none;
-            background: #f9f9f9;
-            margin-right: 5px;
-            border-radius: 8px 8px 0 0;
-        }
-        .tab.active {
-            background: white;
-            border-bottom: 2px solid white;
-            font-weight: bold;
-        }
-        .tab-content {
-            display: none;
-            padding: 20px;
-            background: white;
-            border: 1px solid #ddd;
-            border-radius: 0 0 8px 8px;
-        }
-        .tab-content.active {
-            display: block;
-        }
-
-        .hint {
-            display: inline-block;
-            font-size: 13px;
-            color: #666;
-            margin-top: 10px;
-            margin-bottom: 10px;
-        }
-        
-        .optional {
-            font-size: 13px;
-            color: #666;
-        }
-    </style>
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@5" rel="stylesheet" type="text/css" />
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link rel="stylesheet" href="/css/app.css">
 </head>
 <body>
-<div class="container">
-    <h1>Log in</h1>
+<body class="bg-[#f4f4f4] min-h-full flex flex-col">
+    <div class="flex-1">
+        <div class="max-w-screen-lg mx-auto p-5">
+            <div class="p-5 bg-white rounded-lg shadow-sm">
+                <h1 class="text-3xl">Log in</h1>
 
-    <div class="">
-        <form id="loginForm" method="post">
-            <label>Email address <input type="text" id="email"></label>
-            
-            <label>Password <input type="password" id="password"></label>
-            
-            <button type="submit">Log in</button>
-        </form>
+                <form id="loginForm" class="mt-5 space-y-4">
+                    <div>
+                        <label class="block mb-2 label">Email address</label>
+                        <input type="email" id="email" class="w-full input" required>
+                    </div>
+                
+                    <div>
+                        <label class="block mb-2 label">Password</label>
+                        <input type="password" id="password" class="w-full input" required>
+                    </div>
+                
+                    <button type="submit" class="btn btn-primary btn-block">Log in</button>
+                </form>
+            </div>
+        </div>
     </div>
 </div>
 
