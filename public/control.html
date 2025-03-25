@@ -31,6 +31,52 @@
               <div id="startVCP" class="tab-content bg-base-100 border-base-300 p-5">
                 <form id="startVCPForm" class="space-y-4">
                   <div>
+                    <label class="block mb-2 label">Endpoint</label>
+                    <select id="endpoint" class="w-full select" required>
+                      <option value="ws://ocpp.test.electricmiles.io">Test</option>
+                      <option value="ws://127.0.0.1:9000">Local</option>
+                      <option value="ws://ocpp.stage1.electricmiles.io">
+                        Stage 1
+                      </option>
+                      <option value="ws://ocpp.stage2.electricmiles.io">
+                        Stage 2
+                      </option>
+                      <option value="ws://ocpp.stage3.electricmiles.io">
+                        Stage 3
+                      </option>
+                      <option value="ws://ocpp.electricmiles.io">Production</option>
+                      <option value="ws://ocpp.monta.app">Monta</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label class="block mb-2 label">OCPP Version</label>
+                    <select id="ocppVersion" class="w-full select" required>
+                      <option value="OCPP_1.6">OCPP_1.6</option>
+                      <option value="OCPP_2.0.1">OCPP_2.0.1</option>
+                    </select>
+                  </div>
+
+                  <div class="flex items-center space-x-4">
+                    <label for="testCharge" class="label">
+                      Test Charge
+                    </label>
+                    <input type="checkbox" class="checkbox" id="testCharge" />
+                  </div>
+                  
+                  <div>
+                    <label class="block mb-2 label">Duration</label>
+                    <input type="number" id="duration" class="w-full input" value="1000" min="1" required />
+                  </div>
+
+                  <div class="flex items-center space-x-4">
+                    <label for="isTwinGun" class="label">
+                      Is Twin Gun
+                    </label>
+                    <input type="checkbox" id="isTwinGun" class="checkbox" />
+                  </div>
+
+                  <div>
                     <label class="block mb-2 label">
                       Charge Point ID <span class="optional">(optional)</span>
                     </label>
@@ -55,25 +101,6 @@
                   </div>
             
                   <div>
-                    <label class="block mb-2 label">Endpoint</label>
-                    <select id="endpoint" class="w-full select" required>
-                      <option value="ws://ocpp.test.electricmiles.io">Test</option>
-                      <option value="ws://127.0.0.1:9000">Local</option>
-                      <option value="ws://ocpp.stage1.electricmiles.io">
-                        Stage 1
-                      </option>
-                      <option value="ws://ocpp.stage2.electricmiles.io">
-                        Stage 2
-                      </option>
-                      <option value="ws://ocpp.stage3.electricmiles.io">
-                        Stage 3
-                      </option>
-                      <option value="ws://ocpp.electricmiles.io">Production</option>
-                      <option value="ws://ocpp.monta.app">Monta</option>
-                    </select>
-                  </div>
-            
-                  <div>
                     <label class="block mb-2 label">
                       Start Chance <span class="optional">(optional)</span>
                     </label>
@@ -81,49 +108,14 @@
                     <span class="mt-0.5 block text-sm text-base-content/60">Required when starting multiple VCPs.</span>
                   </div>
             
-                  <div class="flex items-center space-x-4">
-                    <label for="testCharge" class="label">
-                      Test Charge <span class="optional">(optional)</span>
-                    </label>
-                    <input type="checkbox" class="checkbox" id="testCharge" />
-                  </div>
-            
-                  <div>
-                    <label class="block mb-2 label">Duration</label>
-                    <input type="number" id="duration" class="w-full input" value="1000" min="1" required />
-                  </div>
-            
                   <div>
                     <div class="flex items-center space-x-4">
                       <label for="randomDelay" class="label">
-                        Random Delay <span class="optional">(optional)</span>
+                        Random Delay
                       </label>
                       <input type="checkbox" id="randomDelay" class="checkbox" />
                     </div>
                     <span class="mt-0.5 block text-sm text-base-content/60">Required when starting multiple VCPs.</span>
-                  </div>
-            
-                  <div class="flex items-center space-x-4">
-                    <label for="isTwinGun" class="label">
-                      Is Twin Gun <span class="optional">(optional)</span>
-                    </label>
-                    <input type="checkbox" id="isTwinGun" class="checkbox" />
-                  </div>
-            
-                  <div>
-                    <label class="block mb-2 label">
-                      sleep Time <span class="optional">(optional)</span>
-                    </label>
-                    <input type="number" id="sleepTime" class="w-full input" placeholder="500" min="500" />
-                    <span class="mt-0.5 block text-sm text-base-content/60">Required when is twin gun.</span>
-                  </div>
-            
-                  <div>
-                    <label class="block mb-2 label">OCPP Version</label>
-                    <select id="ocppVersion" class="w-full select" required>
-                      <option value="OCPP_1.6">OCPP_1.6</option>
-                      <option value="OCPP_2.0.1">OCPP_2.0.1</option>
-                    </select>
                   </div>
             
                   <button type="submit" class="btn btn-primary btn-block">Start</button>

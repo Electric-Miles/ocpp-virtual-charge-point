@@ -187,7 +187,6 @@ async function startMultipleVcps(payload: StartVcpRequestSchema) {
     endpoint,
     idPrefix,
     count,
-    sleepTime,
     startChance,
     testCharge,
     duration,
@@ -214,7 +213,7 @@ async function startMultipleVcps(payload: StartVcpRequestSchema) {
       // Start each VCP a second apart
       await sleep(i * 1000);
       await vcp.connect();
-      await bootVCP(vcp, sleepTime);
+      await bootVCP(vcp);
     })();
 
     tasks.push(task);
@@ -247,7 +246,6 @@ async function startSingleVcp(payload: StartVcpRequestSchema) {
   const {
     endpoint,
     chargePointId,
-    sleepTime,
     testCharge,
     duration,
     isTwinGun,
@@ -265,7 +263,7 @@ async function startSingleVcp(payload: StartVcpRequestSchema) {
 
   (async () => {
     await vcp.connect();
-    bootVCP(vcp, sleepTime);
+    bootVCP(vcp);
 
     if (testCharge) {
       simulateCharge(vcp, duration);

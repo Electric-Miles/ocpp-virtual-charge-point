@@ -14,7 +14,6 @@ export const StartVcpValidationSchema = {
     chargePointId: { type: "string" },
     idPrefix: { type: "string" },
     count: { type: "integer" },
-    sleepTime: { type: "integer" },
     startChance: { type: "number" },
     testCharge: { type: "boolean" },
     duration: { type: "number" },
@@ -29,7 +28,6 @@ export interface StartVcpRequestSchema {
   chargePointId?: string;
   idPrefix?: string;
   count?: number;
-  sleepTime?: number;
   startChance: number;
   testCharge: boolean;
   duration: number;
