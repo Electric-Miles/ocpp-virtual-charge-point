@@ -22,6 +22,7 @@ interface VCPOptions {
   basicAuthPassword?: string;
   adminWsPort?: number;
   isTwinGun?: boolean; // if VCP is twingun, based on cli param
+  connectorIds?: number[];
 }
 
 export class VCP {
@@ -40,7 +41,8 @@ export class VCP {
 
     this.vcpOptions.isTwinGun = this.vcpOptions.isTwinGun ?? false;
     this.isTwinGun = this.vcpOptions.isTwinGun ?? false;
-    this.connectorIDs = this.initializeConnectorIDs();
+    this.connectorIDs =
+      this.vcpOptions.connectorIds ?? this.initializeConnectorIDs();
     this.status = "Available";
 
     if (vcpOptions.adminWsPort) {

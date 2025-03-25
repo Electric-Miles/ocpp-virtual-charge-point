@@ -191,19 +191,21 @@ async function startMultipleVcps(payload: StartVcpRequestSchema) {
     testCharge,
     duration,
     randomDelay,
-    isTwinGun,
+    connectors,
     ocppVersion,
   } = payload;
 
   const tasks: Promise<void>[] = [];
   let adminWsPort = undefined;
 
+  const connectorIds = computeConnectIds(connectors);
+
   for (let i = 1; i <= count!; i++) {
     const vcp = new VCP({
       endpoint,
       chargePointId: idPrefix! + i,
       ocppVersion,
-      isTwinGun,
+      connectorIds,
       adminWsPort,
     });
 
@@ -248,15 +250,17 @@ async function startSingleVcp(payload: StartVcpRequestSchema) {
     chargePointId,
     testCharge,
     duration,
-    isTwinGun,
+    connectors,
     ocppVersion,
   } = payload;
+
+  const connectorIds = computeConnectIds(connectors);
 
   const vcp = new VCP({
     endpoint,
     chargePointId: chargePointId!,
     ocppVersion,
-    isTwinGun,
+    connectorIds,
   });
 
   vcpList.push(vcp);
@@ -269,4 +273,18 @@ async function startSingleVcp(payload: StartVcpRequestSchema) {
       simulateCharge(vcp, duration);
     }
   })();
+}
+
+function computeConnectIds(connectors: number) {
+  const connectorIds = [];
+
+  if (connectors > 1) {
+    for (let index = 1; index <= connectors; index++) {
+      connectorIds.push(index);
+    }
+  } else {
+    connectorIds.push(1);
+  }
+
+  return connectorIds;
 }

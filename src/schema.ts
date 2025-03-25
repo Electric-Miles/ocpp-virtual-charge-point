@@ -18,7 +18,7 @@ export const StartVcpValidationSchema = {
     testCharge: { type: "boolean" },
     duration: { type: "number" },
     randomDelay: { type: "boolean" },
-    isTwinGun: { type: "boolean" },
+    connectors: { type: "number" },
     ocppVersion: { type: "string" },
   },
 };
@@ -32,7 +32,7 @@ export interface StartVcpRequestSchema {
   testCharge: boolean;
   duration: number;
   randomDelay: boolean;
-  isTwinGun: boolean;
+  connectors: number;
   ocppVersion: OcppVersion;
 }
 

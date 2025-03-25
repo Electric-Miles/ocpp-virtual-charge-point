@@ -69,11 +69,9 @@
                     <input type="number" id="duration" class="w-full input" value="1000" min="1" required />
                   </div>
 
-                  <div class="flex items-center space-x-4">
-                    <label for="isTwinGun" class="label">
-                      Is Twin Gun
-                    </label>
-                    <input type="checkbox" id="isTwinGun" class="checkbox" />
+                  <div>
+                    <label class="block mb-2 label">Connectors</label>
+                    <input type="number" id="connectors" class="w-full input" min="1" value="1" />
                   </div>
 
                   <div>
@@ -287,7 +285,7 @@
             testCharge: document.getElementById("testCharge").checked,
             duration: Number(document.getElementById("duration").value),
             randomDelay: document.getElementById("randomDelay").checked,
-            isTwinGun: document.getElementById("isTwinGun").checked,
+            connectors: document.getElementById("connectors").value,
             sleepTime: Number(document.getElementById("sleepTime").value),
             ocppVersion: document.getElementById("ocppVersion").value,
           });
