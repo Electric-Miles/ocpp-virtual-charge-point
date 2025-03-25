@@ -192,7 +192,13 @@
               <input type="radio" name="my_tabs_2" class="tab" aria-label="Get Status" />
             
               <div id="getStatus" class="tab-content bg-base-100 border-base-300 p-5">
-                <button class="btn btn-primary btn-block" onclick="getVCPStatus()">Get Status</button>
+                <form id="getStatusForm">
+                  <div class="flex items-center space-x-4">
+                    <label for="verbose" class="label">Verbose</label>
+                    <input type="checkbox" id="verbose" class="checkbox" checked>
+                  </div>
+                  <button type="submit" class="mt-4 btn btn-primary btn-block">Get Status</button>
+                </form>
               </div>
             </div>
             
@@ -317,9 +323,13 @@
           });
         });
 
-      function getVCPStatus() {
-        sendRequest("/api/vcp/status?verbose=true", "GET");
-      }
+      document.getElementById("getStatusForm").addEventListener("submit", function (event) {
+        event.preventDefault();
+
+        const verbose = document.getElementById("verbose").checked
+
+        sendRequest(`/api/vcp/status?verbose=${verbose}`, "GET");
+      });
 
       document.getElementById("logout").addEventListener("click", (event) => {
         event.preventDefault();
