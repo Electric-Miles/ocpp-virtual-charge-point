@@ -42,6 +42,10 @@ app
     });
   });
 
+app.get("/health", async (request, reply) => {
+  return reply.send("OK");
+});
+
 const start = async () => {
   try {
     await app.listen({ port, host });
