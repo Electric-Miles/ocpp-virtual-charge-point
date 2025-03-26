@@ -101,7 +101,7 @@ export const LoginValidationSchema = {
   type: "object",
   required: ["email", "password"],
   properties: {
-    email: { type: "string", format: "email" },
+    email: { type: "string" },
     password: { type: "string" },
   },
 };
