@@ -214,7 +214,7 @@
     </div>
 
     <script>
-      window.addEventListener("load", (event) => {
+      document.addEventListener('DOMContentLoaded', (event) => {
         fetch("/api/auth/user", {
           method: "GET",
           headers: {
@@ -227,8 +227,14 @@
             if (data.status !== "success") {
               window.location.href = "/login";
             } else {
-              document.getElementById("first_name").textContent =
-                data.data.first_name;
+              document.getElementById("first_name").textContent = data.data.first_name;
+
+              const chargePointId = localStorage.getItem("chargePointId");
+              const idPrefix = localStorage.getItem("idPrefix");
+
+              document.getElementById("statusChargePointId").value = chargePointId ?? idPrefix;
+              document.getElementById("vcpId").value = chargePointId;
+              document.getElementById("vcpIdPrefix").value = idPrefix;
             }
           })
           .catch((error) => {
