@@ -196,8 +196,8 @@ async function startMultipleVcps(payload: StartVcpRequestSchema) {
   } = payload;
 
   const tasks: Promise<void>[] = [];
-  let adminWsPort = undefined;
 
+  const isTwinGun = connectors > 1 ? true : false;
   const connectorIds = computeConnectIds(connectors);
 
   for (let i = 1; i <= count!; i++) {
@@ -205,8 +205,8 @@ async function startMultipleVcps(payload: StartVcpRequestSchema) {
       endpoint,
       chargePointId: idPrefix! + i,
       ocppVersion,
+      isTwinGun,
       connectorIds,
-      adminWsPort,
     });
 
     vcpList.push(vcp);
@@ -254,12 +254,14 @@ async function startSingleVcp(payload: StartVcpRequestSchema) {
     ocppVersion,
   } = payload;
 
+  const isTwinGun = connectors > 1 ? true : false;
   const connectorIds = computeConnectIds(connectors);
 
   const vcp = new VCP({
     endpoint,
     chargePointId: chargePointId!,
     ocppVersion,
+    isTwinGun,
     connectorIds,
   });
 
