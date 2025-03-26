@@ -5,6 +5,10 @@ const users = {
   password: process.env.USERS_PASSWORD,
   users: [
     {
+      first_name: "User",
+      email: "em",
+    },
+    {
       first_name: "Alan",
       email: "alan@electricmiles.co.uk",
     },
