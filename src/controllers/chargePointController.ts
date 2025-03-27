@@ -77,7 +77,9 @@ export const stopVcp = async (
   }
 
   if (vcpId) {
-    const vcp = vcpList.find((vcp) => vcp.vcpOptions.chargePointId === vcpId);
+    const vcp = vcpList.find(
+      (vcp: VCP) => vcp.vcpOptions.chargePointId === vcpId,
+    );
 
     if (!vcp) {
       return reply.send({ status: "error", message: "VCP not found" });
@@ -86,7 +88,7 @@ export const stopVcp = async (
     vcp.disconnect();
 
     const vcpIndex = vcpList.findIndex(
-      (vcp) => vcp.vcpOptions.chargePointId === vcpId,
+      (vcp: VCP) => vcp.vcpOptions.chargePointId === vcpId,
     );
 
     delete vcpList[vcpIndex];
@@ -98,7 +100,7 @@ export const stopVcp = async (
   }
 
   if (vcpIdPrefix) {
-    const vcps = vcpList.filter((vcp, index, vcpList) => {
+    const vcps = vcpList.filter((vcp: VCP, index, vcpList) => {
       if (vcp.vcpOptions.chargePointId.startsWith(vcpIdPrefix)) {
         delete vcpList[index];
 
@@ -128,7 +130,7 @@ export const changeVcpStatus = async (
   const { chargePointId, action, payload } = request.body;
 
   const vcp = vcpList.find(
-    (vcp) => vcp.vcpOptions.chargePointId === chargePointId,
+    (vcp: VCP) => vcp.vcpOptions.chargePointId === chargePointId,
   );
 
   if (!vcp) {
@@ -158,7 +160,6 @@ export const getVcpStatus = async (
           isFinishing: vcp.isFinishing,
           isWaiting: vcp.isWaiting,
           lastAction: vcp.lastAction,
-          connectorIDs: vcp.connectorIDs,
           status: vcp.status,
           ...vcp.vcpOptions,
         };
