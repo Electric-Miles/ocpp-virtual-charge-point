@@ -20,9 +20,11 @@ export const startVcp = async (
   const payload = request.body;
 
   if (payload.chargePointId) {
-    const vcpWithChargePointId = vcpList.find(
-      (vcp) => vcp.vcpOptions.chargePointId === payload.chargePointId,
-    );
+    console.log("debugging 1:", vcpList);
+    const vcpWithChargePointId = vcpList.find((vcp) => {
+      console.log("debugging 2:", vcp);
+      vcp.vcpOptions.chargePointId === payload.chargePointId;
+    });
 
     if (vcpWithChargePointId) {
       return reply.send({
