@@ -20,11 +20,9 @@ export const startVcp = async (
   const payload = request.body;
 
   if (payload.chargePointId) {
-    console.log("debugging 1:", vcpList);
-    const vcpWithChargePointId = vcpList.find((vcp) => {
-      console.log("debugging 2:", vcp);
-      vcp.vcpOptions.chargePointId === payload.chargePointId;
-    });
+    const vcpWithChargePointId = vcpList.find(
+      (vcp: VCP) => vcp.vcpOptions.chargePointId === payload.chargePointId,
+    );
 
     if (vcpWithChargePointId) {
       return reply.send({
@@ -40,7 +38,7 @@ export const startVcp = async (
       message: `VCP with ${payload.chargePointId} started`,
     });
   } else {
-    const vcpWithIdPrefix = vcpList.find((vcp) =>
+    const vcpWithIdPrefix = vcpList.find((vcp: VCP) =>
       vcp.vcpOptions.chargePointId.startsWith(payload.idPrefix!),
     );
 
