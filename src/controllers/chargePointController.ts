@@ -70,7 +70,7 @@ export const stopVcp = async (
 
       vcp.disconnect();
 
-      delete vcpList[index];
+      vcpList.splice(index, 1);
     }
 
     return reply.send({ status: "success", message: "All VCPs stopped" });
@@ -91,7 +91,7 @@ export const stopVcp = async (
       (vcp: VCP) => vcp.vcpOptions.chargePointId === vcpId,
     );
 
-    delete vcpList[vcpIndex];
+    vcpList.splice(vcpIndex, 1);
 
     return reply.send({
       status: "success",
@@ -102,7 +102,7 @@ export const stopVcp = async (
   if (vcpIdPrefix) {
     const vcps = vcpList.filter((vcp: VCP, index, vcpList) => {
       if (vcp.vcpOptions.chargePointId.startsWith(vcpIdPrefix)) {
-        delete vcpList[index];
+        vcpList.splice(index, 1);
 
         return true;
       }
@@ -154,27 +154,23 @@ export const getVcpStatus = async (
   let response: any[] = [];
 
   if (verbose) {
-    response = vcpList
-      .map((vcp: VCP) => {
-        return {
-          isFinishing: vcp.isFinishing,
-          isWaiting: vcp.isWaiting,
-          lastAction: vcp.lastAction,
-          status: vcp.status,
-          ...vcp.vcpOptions,
-        };
-      })
-      .filter((vcp: any) => vcp !== null);
+    response = vcpList.map((vcp: VCP) => {
+      return {
+        isFinishing: vcp.isFinishing,
+        isWaiting: vcp.isWaiting,
+        lastAction: vcp.lastAction,
+        status: vcp.status,
+        ...vcp.vcpOptions,
+      };
+    });
   } else {
-    const data = vcpList
-      .map((vcp: VCP) => {
-        return {
-          chargePointId: vcp.vcpOptions.chargePointId,
-          status: vcp.status,
-          endpoint: vcp.vcpOptions.endpoint,
-        };
-      })
-      .filter((vcp: any) => vcp !== null);
+    const data = vcpList.map((vcp: VCP) => {
+      return {
+        chargePointId: vcp.vcpOptions.chargePointId,
+        status: vcp.status,
+        endpoint: vcp.vcpOptions.endpoint,
+      };
+    });
 
     response.push(data);
     response.push({ meta: { count: data.length } });
