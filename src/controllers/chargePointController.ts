@@ -87,11 +87,7 @@ export const stopVcp = async (
 
     vcp.disconnect();
 
-    const vcpIndex = vcpList.findIndex(
-      (vcp: VCP) => vcp.vcpOptions.chargePointId === vcpId,
-    );
-
-    vcpList.splice(vcpIndex, 1);
+    vcpList.splice(vcpList.indexOf(vcp), 1);
 
     return reply.send({
       status: "success",
@@ -100,21 +96,15 @@ export const stopVcp = async (
   }
 
   if (vcpIdPrefix) {
-    const vcps = vcpList.filter((vcp: VCP, index, vcpList) => {
-      if (vcp.vcpOptions.chargePointId.startsWith(vcpIdPrefix)) {
-        vcpList.splice(index, 1);
+    vcpList
+        .filter((vcp: VCP) =>
+            vcp.vcpOptions.chargePointId.startsWith(vcpIdPrefix),
+        )
+        .forEach((vcp: VCP) => {
+          vcp.disconnect();
 
-        return true;
-      }
-
-      return false;
-    });
-
-    for (let index = 0; index < vcps.length; index++) {
-      const vcp = vcps[index];
-
-      vcp.disconnect();
-    }
+          vcpList.splice(vcpList.indexOf(vcp), 1);
+        });
 
     return reply.send({
       status: "success",
@@ -192,9 +182,10 @@ async function startMultipleVcps(payload: StartVcpRequestSchema) {
     ocppVersion,
   } = payload;
 
+  const vcps: VCP[] = [];
   const tasks: Promise<void>[] = [];
 
-  const isTwinGun = connectors > 1 ? true : false;
+  const isTwinGun = connectors > 1;
   const connectorIds = computeConnectIds(connectors);
 
   for (let i = 1; i <= count!; i++) {
@@ -206,7 +197,7 @@ async function startMultipleVcps(payload: StartVcpRequestSchema) {
       connectorIds,
     });
 
-    vcpList.push(vcp);
+    vcps.push(vcp);
 
     const task = (async () => {
       // Start each VCP a second apart
@@ -217,6 +208,8 @@ async function startMultipleVcps(payload: StartVcpRequestSchema) {
 
     tasks.push(task);
   }
+
+  vcpList.push(...vcps);
 
   // Wait for all VCPs to be connected and initialized
   await Promise.all(tasks);
