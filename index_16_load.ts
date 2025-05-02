@@ -86,7 +86,7 @@ async function run() {
       const randomChance = Math.floor(Math.random() * 100);
       console.log(`randomChance: ${randomChance}`)
       if (randomChance <= startChance) {
-        return simulateCharge(vcp, duration, randomDelay);
+        return simulateCharge(vcp, duration, 2, randomDelay);
       }
       else {
         return Promise.resolve();

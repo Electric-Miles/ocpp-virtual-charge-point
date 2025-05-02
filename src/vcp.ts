@@ -14,6 +14,7 @@ import {
   validateOcppRequest,
   validateOcppResponse,
 } from "./jsonSchemaValidator";
+import {sleep} from "./utils";
 
 interface VCPOptions {
   ocppVersion: OcppVersion;
@@ -121,17 +122,9 @@ export class VCP {
 
   async sendAndWait(ocppCall: OcppCall<any>) {
     if (this.isWaiting) {
-      // wait till isWaiting is false
-      const self = this;
-      await new Promise((resolve) => {
-        const interval = setInterval(() => {
-          //logger.info('waiting');
-          if (!self.isWaiting) {
-            clearInterval(interval);
-            this.sendAndWait(ocppCall);
-          }
-        }, 100);
-      });
+      // try again after 1 second
+      await sleep(1000);
+      await this.sendAndWait(ocppCall);
     } else {
       this.isWaiting = true;
       this.send(ocppCall);

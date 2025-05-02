@@ -231,7 +231,7 @@ async function startMultipleVcps(payload: StartVcpRequestSchema) {
       console.log(`randomChance: ${randomChance}`);
 
       if (randomChance <= startChance) {
-        return simulateCharge(vcp, duration, randomDelay);
+        return simulateCharge(vcp, duration, 2, randomDelay);
       } else {
         return Promise.resolve();
       }
@@ -251,7 +251,7 @@ async function startSingleVcp(payload: StartVcpRequestSchema) {
     ocppVersion,
   } = payload;
 
-  const isTwinGun = connectors > 1 ? true : false;
+  const isTwinGun = connectors > 1;
   const connectorIds = computeConnectIds(connectors);
 
   const vcp = new VCP({
@@ -264,12 +264,11 @@ async function startSingleVcp(payload: StartVcpRequestSchema) {
 
   vcpList.push(vcp);
 
-  (async () => {
+  await (async () => {
     await vcp.connect();
-    bootVCP(vcp);
-
+    await bootVCP(vcp);
     if (testCharge) {
-      simulateCharge(vcp, duration);
+      await simulateCharge(vcp, 1, duration);
     }
   })();
 }

@@ -34,19 +34,39 @@
                     <label class="block mb-2 label">Endpoint</label>
                     <select id="endpoint" class="w-full select" required>
                       <option value="ws://ocpp.test.electricmiles.io">Test</option>
-                      <option value="ws://127.0.0.1:9000">Local</option>
-                      <option value="ws://ocpp.stage1.electricmiles.io">
-                        Stage 1
-                      </option>
-                      <option value="ws://ocpp.stage2.electricmiles.io">
-                        Stage 2
-                      </option>
-                      <option value="ws://ocpp.stage3.electricmiles.io">
-                        Stage 3
-                      </option>
+                      <option value="ws://ocpp.stage1.electricmiles.io">Stage 1</option>
+                      <option value="ws://ocpp.stage2.electricmiles.io">Stage 2</option>
+                      <option value="ws://ocpp.stage3.electricmiles.io">Stage 3</option>
                       <option value="ws://ocpp.electricmiles.io">Production</option>
                       <option value="ws://ocpp.monta.app">Monta</option>
+                      <option value="ws://127.0.0.1:9000">Local Dev</option>
                     </select>
+                  </div>
+
+                  <div>
+                    <label class="block mb-2 label">
+                      Charge Point ID <span class="optional">(optional)</span>
+                    </label>
+                    <input type="text" id="chargePointId" class="w-full input" placeholder="VCP_ALAN_01" />
+                    <span class="mt-0.5 block text-sm text-base-content/60">Required if ID prefix is not provided.</span>
+                  </div>
+
+                  <div>
+                    <label class="block mb-2 label">Connector Count</label>
+                    <input type="number" id="connectors" class="w-full input" min="1" value="1" />
+                  </div>
+
+                  <div class="flex items-center space-x-4">
+                    <label for="testCharge" class="label">
+                      Auto Start Charge Session
+                    </label>
+                    <input type="checkbox" class="checkbox" id="testCharge" />
+                  </div>
+                  
+                  <div>
+                    <label class="block mb-2 label">Auto Start Charge Session Duration</label>
+                    <input type="number" id="duration" class="w-full input" value="5" min="1" required />
+                    <span class="mt-0.5 block text-sm text-base-content/60">Used when auto charging - this is the duration of the session (minutes) </span>
                   </div>
 
                   <div>
@@ -57,53 +77,28 @@
                     </select>
                   </div>
 
-                  <div class="flex items-center space-x-4">
-                    <label for="testCharge" class="label">
-                      Test Charge
-                    </label>
-                    <input type="checkbox" class="checkbox" id="testCharge" />
-                  </div>
-                  
-                  <div>
-                    <label class="block mb-2 label">Duration</label>
-                    <input type="number" id="duration" class="w-full input" value="1000" min="1" required />
-                  </div>
-
-                  <div>
-                    <label class="block mb-2 label">Connectors</label>
-                    <input type="number" id="connectors" class="w-full input" min="1" value="1" />
-                  </div>
+                  <br>
+                  <h1>Start Multiple VCPs</h1>
 
                   <div>
                     <label class="block mb-2 label">
-                      Charge Point ID <span class="optional">(optional)</span>
-                    </label>
-                    <input type="text" id="chargePointId" class="w-full input" placeholder="VCP_ALAN_01" />
-                    <span class="mt-0.5 block text-sm text-base-content/60">Required if ID prefix is not provided.</span>
-                  </div>
-            
-                  <div>
-                    <label class="block mb-2 label">
-                      ID Prefix <span class="optional">(optional)</span>
+                      ID Prefix <span class="optional">(optional - set to start multiple VCPs)</span>
                     </label>
                     <input type="text" id="idPrefix" class="w-full input" placeholder="VCP_TEST_" />
-                    <span class="mt-0.5 block text-sm text-base-content/60">Required if charge point ID is not provided.</span>
                   </div>
             
                   <div>
                     <label class="block mb-2 label">
-                      Count <span class="optional">(optional)</span>
+                      Charger Count
                     </label>
-                    <input type="number" class="w-full input" id="count" min="1" />
-                    <span class="mt-0.5 block text-sm text-base-content/60">Required if ID prefix is provided.</span>
+                    <input type="number" class="w-full input" id="count" min="1" value="1" />
                   </div>
             
                   <div>
                     <label class="block mb-2 label">
-                      Start Chance <span class="optional">(optional)</span>
+                      Auto Start Charge Session % Chance <span class="optional">(optional)</span>
                     </label>
-                    <input type="number" id="startChance" class="w-full input" placeholder="20" min="1" />
-                    <span class="mt-0.5 block text-sm text-base-content/60">Required when starting multiple VCPs.</span>
+                    <input type="number" id="startChance" class="w-full input" placeholder="100" min="1" />
                   </div>
             
                   <div>
@@ -113,8 +108,10 @@
                       </label>
                       <input type="checkbox" id="randomDelay" class="checkbox" />
                     </div>
-                    <span class="mt-0.5 block text-sm text-base-content/60">Required when starting multiple VCPs.</span>
                   </div>
+
+                  <br>
+
             
                   <button type="submit" class="btn btn-primary btn-block">Start</button>
                 </form>

@@ -3,13 +3,13 @@ import { VCP } from "../vcp";
 import {transactionManager} from "../v16/transactionManager";
 import { sleep } from "../utils"
 
-export async function simulateCharge(vcp: VCP, duration: number,randomDelay: boolean = false) {
+export async function simulateCharge(vcp: VCP, duration: number, countOfSessions: number, randomDelay: boolean = false) {
   const validConnectors = vcp.connectorIDs.filter(connector => connector !== 0);
 
   const chargePromises = validConnectors.map(async (connector) => {
     console.log(`Starting test charge for connector: ${connector}`);
     await sleep(500); 
-    for (let i = 1; i <= 2; i++) {
+    for (let i = 1; i <= countOfSessions; i++) {
       console.log(`charge session count: ${i}`);
       // if randomDelay, test charge will start between 500-120,000ms
       if (!randomDelay) {
@@ -46,7 +46,8 @@ export async function simulateCharge(vcp: VCP, duration: number,randomDelay: boo
       });
       console.log("vcp charging...")
       // send stopNotification after set duration
-      await sleep(duration);
+      // duration input is in minutes
+      await sleep(duration * 60000);
       
       // gets transId by VCP instance
       let transId = transactionManager.getTransactionIdByVcp(vcp);
