@@ -15,6 +15,7 @@ import {
   validateOcppResponse,
 } from "./jsonSchemaValidator";
 import {getFirmware, getVendor, sleep} from "./utils";
+import {transactionManager} from "./v16/transactionManager";
 
 interface VCPOptions {
   ocppVersion: OcppVersion;
@@ -254,6 +255,12 @@ export class VCP {
       );
     }
 
+    for (const connector of this.connectorIDs) {
+      let transactionId = transactionManager.getTransactionIdByVcp(this, connector);
+      if (transactionId) {
+        transactionManager.stopTransaction(transactionId);
+      }
+    }
     this.isFinishing = true;
     this.ws.close();
   }

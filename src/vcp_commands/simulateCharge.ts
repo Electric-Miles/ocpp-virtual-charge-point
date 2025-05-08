@@ -44,13 +44,13 @@ export async function simulateCharge(vcp: VCP, duration: number, countOfSessions
           status: "Charging",
         },
       });
-      console.log("vcp charging...")
+      console.log("vcp charging..."+duration+" minutes")
       // send stopNotification after set duration
       // duration input is in minutes
       await sleep(duration * 60000);
       
       // gets transId by VCP instance
-      let transId = transactionManager.getTransactionIdByVcp(vcp);
+      let transId = transactionManager.getTransactionIdByVcp(vcp, connector);
       console.log(`transactionId for stopNotif : ${transId}`);
     
       await vcp.sendAndWait({
