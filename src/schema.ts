@@ -34,6 +34,7 @@ export interface StartVcpRequestSchema {
   randomDelay: boolean;
   connectors: number;
   ocppVersion: OcppVersion;
+  model: string;
 }
 
 export enum StatusNotification {

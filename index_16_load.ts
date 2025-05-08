@@ -29,7 +29,7 @@ const randomDelay: boolean = args["RANDOM_DELAY"] ?? process.env["RANDOM_DELAY"]
 const isTwinGun: boolean = args["TWIN_GUN"] ?? process.env["TWIN_GUN"] === "true" ?? false;
 const adminPort: string|undefined = args["ADMIN_PORT"] ?? process.env["ADMIN_PORT"] ?? undefined;
 const adminPortIncrement: boolean = args["ADMIN_PORT_INCREMENT"] ?? process.env["ADMIN_PORT_INCREMENT"] === "true" ?? false;
-
+const model: string = args["MODEL"] ?? process.env["MODEL"] ?? "EVC01";
 
 const endpoint =
     args["ENV"]
@@ -61,6 +61,7 @@ async function run() {
       ocppVersion: OcppVersion.OCPP_1_6,
       isTwinGun: isTwinGun,
       adminWsPort: adminWsPort,
+      model: model
     });
   
     vcpList.push(vcp);

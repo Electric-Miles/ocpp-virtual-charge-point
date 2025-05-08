@@ -19,13 +19,14 @@ const endpoint =
                 :
                 `ws://ocpp.${args["ENV"]}.electricmiles.io`
         : args["WS_URL"] ?? process.env["WS_URL"] ?? "ws://ocpp.test.electricmiles.io";
-import { simulateCharge } from "./src/simulateCharge";
+import { simulateCharge } from "./src/vcp_commands/simulateCharge";
 
 const sleepTime: number = Number(args["SLEEP_TIME"] ?? process.env["SLEEP_TIME"] ?? 500);
 const startChance: number = Number(args["START_CHANCE"] ?? process.env["START_CHANCE"] ?? 500);
 const testCharge: boolean = args["TEST_CHARGE"] ?? process.env["TEST_CHARGE"] === "true" ?? false;
 const duration: number = Number(args["DURATION"] ?? process.env["DURATION"] ?? 60000);
 const isTwinGun: boolean = args["TWIN_GUN"] ?? process.env["TWIN_GUN"] === "true" ?? false;
+const model: string = args["MODEL"] ?? process.env["MODEL"] ?? "EVC01";
 
 const vcp = new VCP({
   endpoint: endpoint,
@@ -36,6 +37,7 @@ const vcp = new VCP({
       args["ADMIN_PORT"] ?? process.env["ADMIN_PORT"] ?? "9999"
   ),
   isTwinGun: isTwinGun,
+  model: model,
 });
 
 (async () => {
@@ -45,6 +47,6 @@ const vcp = new VCP({
   // if TEST_CHARGE=true set in cli, start test charge
   console.log(`Test charge set: ${testCharge}`);
   if (testCharge) {
-    simulateCharge(vcp, duration, false);
+    simulateCharge(vcp, duration, 1, false);
   }
 })();

@@ -12,10 +12,10 @@ export async function bootVCP(vcp: VCP, sleepTime: number = 500) {
       messageId: uuid.v4(),
       action: "BootNotification",
       payload: {
-        chargePointVendor: "Vestel",
-        chargePointModel: "EVC10",
+        chargePointVendor: vcp.vendor,
+        chargePointModel: vcp.model,
         chargePointSerialNumber: "S001",
-        firmwareVersion: "1.0.0",
+        firmwareVersion: vcp.version,
       },
     });
     for (let connectorId of vcp.connectorIDs) {
@@ -53,10 +53,10 @@ export async function bootVCP(vcp: VCP, sleepTime: number = 500) {
       messageId: uuid.v4(),
       action: "BootNotification",
       payload: {
-        chargePointVendor: "ATESS",
-        chargePointModel: "EVA-07S-SE",
+        chargePointVendor: vcp.vendor,
+        chargePointModel: vcp.model,
         chargePointSerialNumber: "S001",
-        firmwareVersion: "EVA-07S_SE-V4.2.9-20220610",
+        firmwareVersion: vcp.version,
       },
     });
     await sleep(100);

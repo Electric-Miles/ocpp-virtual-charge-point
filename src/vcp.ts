@@ -14,7 +14,7 @@ import {
   validateOcppRequest,
   validateOcppResponse,
 } from "./jsonSchemaValidator";
-import {sleep} from "./utils";
+import {getFirmware, getVendor, sleep} from "./utils";
 
 interface VCPOptions {
   ocppVersion: OcppVersion;
@@ -24,6 +24,7 @@ interface VCPOptions {
   adminWsPort?: number;
   isTwinGun?: boolean; // if VCP is twingun, based on cli param
   connectorIds?: number[];
+  model: string;
 }
 
 export class VCP {
@@ -36,6 +37,9 @@ export class VCP {
   public isTwinGun: boolean = false;
   public connectorIDs: number[];
   public status: string;
+  public model: string;
+  public vendor: string;
+  public version: string;
 
   constructor(public vcpOptions: VCPOptions) {
     this.messageHandler = resolveMessageHandler(vcpOptions.ocppVersion);
@@ -45,6 +49,9 @@ export class VCP {
     this.connectorIDs =
       this.vcpOptions.connectorIds ?? this.initializeConnectorIDs();
     this.status = "Available";
+    this.model = this.vcpOptions.model ??  "EVC01";
+    this.vendor = getVendor(this.model);
+    this.version = getFirmware(this.model);
 
     if (vcpOptions.adminWsPort) {
       this.adminWs = new WebSocketServer({

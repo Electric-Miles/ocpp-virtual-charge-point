@@ -141,10 +141,30 @@ export const getVcpStatus = async (
   reply: FastifyReply,
 ) => {
   const { verbose } = request.query;
-  let response: any[] = [];
+  let response: any = {};
+
+  // count how many vcp in each status
+  const statusCount = vcpList.reduce((acc: any, vcp: VCP) => {
+    acc[vcp.status] = (acc[vcp.status] || 0) + 1;
+    return acc;
+  }, {});
+
+  // count how many vcp in each endpoint
+  const endpointCount = vcpList.reduce((acc: any, vcp: VCP) => {
+    acc[vcp.vcpOptions.endpoint] = (acc[vcp.vcpOptions.endpoint] || 0) + 1;
+    return acc;
+  }, {});
+
+  // count how many vcp in each model
+  const modelCount = vcpList.reduce((acc: any, vcp: VCP) => {
+    acc[vcp.vcpOptions.model] = (acc[vcp.vcpOptions.model] || 0) + 1;
+    return acc;
+  }, {});
+
+  response = {meta:  {count: vcpList.length }, statusCount, endpointCount, modelCount};
 
   if (verbose) {
-    response = vcpList.map((vcp: VCP) => {
+    const vpcList = vcpList.map((vcp: VCP) => {
       return {
         isFinishing: vcp.isFinishing,
         isWaiting: vcp.isWaiting,
@@ -153,17 +173,7 @@ export const getVcpStatus = async (
         ...vcp.vcpOptions,
       };
     });
-  } else {
-    const data = vcpList.map((vcp: VCP) => {
-      return {
-        chargePointId: vcp.vcpOptions.chargePointId,
-        status: vcp.status,
-        endpoint: vcp.vcpOptions.endpoint,
-      };
-    });
-
-    response.push(data);
-    response.push({ meta: { count: data.length } });
+    response = { ...response, vpcList: vpcList };
   }
 
   return reply.send({ status: "success", data: response });
@@ -180,6 +190,7 @@ async function startMultipleVcps(payload: StartVcpRequestSchema) {
     randomDelay,
     connectors,
     ocppVersion,
+    model,
   } = payload;
 
   const vcps: VCP[] = [];
@@ -195,6 +206,7 @@ async function startMultipleVcps(payload: StartVcpRequestSchema) {
       ocppVersion,
       isTwinGun,
       connectorIds,
+      model,
     });
 
     vcps.push(vcp);
@@ -242,6 +254,7 @@ async function startSingleVcp(payload: StartVcpRequestSchema) {
     duration,
     connectors,
     ocppVersion,
+    model,
   } = payload;
 
   const isTwinGun = connectors > 1;
@@ -253,6 +266,7 @@ async function startSingleVcp(payload: StartVcpRequestSchema) {
     ocppVersion,
     isTwinGun,
     connectorIds,
+    model,
   });
 
   vcpList.push(vcp);

@@ -7,6 +7,7 @@
     <link href="https://cdn.jsdelivr.net/npm/daisyui@5" rel="stylesheet" type="text/css"/>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <link rel="stylesheet" href="/css/app.css">
+    <link rel="shortcut icon" href="https://assets.test.electricmiles.io/favicon.ico">
   </head>
   <body class="bg-[#f4f4f4] min-h-full flex flex-col">
     <div class="flex-1">
@@ -67,6 +68,16 @@
                     <label class="block mb-2 label">Auto Start Charge Session Duration</label>
                     <input type="number" id="duration" class="w-full input" value="5" min="1" required />
                     <span class="mt-0.5 block text-sm text-base-content/60">Used when auto charging - this is the duration of the session (minutes) </span>
+                  </div>
+
+                  <div>
+                    <label class="block mb-2 label">Model</label>
+                    <select id="model" class="w-full select" required>
+                      <option value="EVC01">Vestel EVC01</option>
+                      <option value="EVA-07S-SE">ATESS EVA-07S-SE</option>
+                      <option value="EVC03">Vestel EVC03 DC</option>
+                      <option value="KC-P30">keba KC-P30</option>
+                    </select>
                   </div>
 
                   <div>
@@ -224,6 +235,7 @@
       </div>
     </div>
 
+
     <script>
       document.addEventListener('DOMContentLoaded', (event) => {
         fetch("/api/auth/user", {
@@ -242,10 +254,16 @@
 
               const chargePointId = localStorage.getItem("chargePointId");
               const idPrefix = localStorage.getItem("idPrefix");
+              const endpoint = localStorage.getItem("endpoint");
 
               document.getElementById("statusChargePointId").value = chargePointId ?? idPrefix;
               document.getElementById("vcpId").value = chargePointId;
+              document.getElementById("chargePointId").value = chargePointId;
+              document.getElementById("idPrefix").value = idPrefix;
               document.getElementById("vcpIdPrefix").value = idPrefix;
+              if (endpoint) {
+                document.getElementById("endpoint").value = endpoint;
+              }
             }
           })
           .catch((error) => {
@@ -261,6 +279,7 @@
       }
 
       async function sendRequest(url, method, body = null) {
+        document.getElementById("response").style.backgroundColor = "#ffffff";
         const options = {
           method,
           headers: {
@@ -271,6 +290,7 @@
         };
         const response = await fetch(url, options);
         const data = await response.json();
+        document.getElementById("response").style.backgroundColor = "#000000";
         document.getElementById("response").textContent = JSON.stringify(
           data,
           null,
@@ -285,14 +305,19 @@
 
           const chargePointId = document.getElementById("chargePointId").value;
           const idPrefix = document.getElementById("idPrefix").value;
+          const endpoint = document.getElementById("endpoint").value;
 
           if (chargePointId) {
             localStorage.setItem("chargePointId", chargePointId);
+            localStorage.removeItem("idPrefix");
           }
 
           if (idPrefix) {
             localStorage.setItem("idPrefix", idPrefix);
+            localStorage.removeItem("chargePointId");
           }
+
+          localStorage.setItem("endpoint", endpoint);
 
           document.getElementById("statusChargePointId").value =
             chargePointId ?? idPrefix;
@@ -303,13 +328,14 @@
             chargePointId,
             idPrefix,
             count: Number(document.getElementById("count").value),
-            endpoint: document.getElementById("endpoint").value,
+            endpoint,
             startChance: Number(document.getElementById("startChance").value),
             testCharge: document.getElementById("testCharge").checked,
             duration: Number(document.getElementById("duration").value),
             randomDelay: document.getElementById("randomDelay").checked,
             connectors: document.getElementById("connectors").value,
             ocppVersion: document.getElementById("ocppVersion").value,
+            model: document.getElementById("model").value,
           });
         });
 
