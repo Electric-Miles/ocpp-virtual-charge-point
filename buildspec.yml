@@ -30,16 +30,6 @@ artifacts:
   files:
     - buildspec.yml
   secondary-artifacts:
-    VCPStage1EnvTask:
-      base-directory: "./ecs-config/stage1"
-      files:
-        - taskdef.json
-        - appspec.yaml
-    VCPTestEnvTask:
-      base-directory: "./ecs-config/test"
-      files:
-        - taskdef.json
-        - appspec.yaml
     VCPImage:
       base-directory: ./vcp_image/
       files:
