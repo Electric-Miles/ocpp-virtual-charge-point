@@ -28,7 +28,7 @@ phases:
       - printf '[{"name":"vcp-stimulator","imageUri":"%s"}]' "$REPO_URI:$IMAGE_TAG" > ./vcp_image/imagedefinitions.json
 artifacts:
   files:
-    - buildspec.yml
+    - ./vcp_image/imagedefinitions.json
   secondary-artifacts:
     VCPImage:
       base-directory: ./vcp_image/
