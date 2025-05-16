@@ -25,17 +25,13 @@ phases:
       - docker push $REPO_URI:$IMAGE_TAG
       - docker push $REPO_URI:latest
       - mkdir ./vcp_image
-      - printf '{"ImageURI":"%s"}' "$REPO_URI:$IMAGE_TAG" > ./vcp_image/imageDetail.json
+      - printf '[{"name":"vcp-stimulator","imageUri":"%s"}]' "$REPO_URI:$IMAGE_TAG" > ./vcp_image/imagedefinitions.json
+      - ls ./vcp_image
 artifacts:
   files:
     - buildspec.yml
   secondary-artifacts:
-    VCPStage1EnvTask:
-      base-directory: "./ecs-config/stage1"
-      files:
-        - taskdef.json
-        - appspec.yaml
-    VCPTestEnvTask:
+    OCPPTestEnvTask:
       base-directory: "./ecs-config/test"
       files:
         - taskdef.json
@@ -43,4 +39,4 @@ artifacts:
     VCPImage:
       base-directory: ./vcp_image/
       files:
-        - imageDetail.json
+        - imagedefinitions.json
