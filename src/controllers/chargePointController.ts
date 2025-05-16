@@ -19,22 +19,6 @@ export const startVcp = async (
 ) => {
   const payload = request.body;
 
-<<<<<<< HEAD
-  // if count is greater than 1, require idPrefix
-  if (payload.chargePointId) {
-    startSingleVcp(payload);
-
-    return reply.send({
-      status: "sucess",
-      message: `VCP with ${payload.chargePointId} started`,
-    });
-  } else {
-    startMultipleVcps(payload);
-
-    return reply.send({
-      status: "sucess",
-      message: `${vcpList.length} VCPs started`,
-=======
   if (payload.chargePointId) {
     const vcpWithChargePointId = vcpList.find(
       (vcp: VCP) => vcp.vcpOptions.chargePointId === payload.chargePointId,
@@ -70,7 +54,6 @@ export const startVcp = async (
     return reply.send({
       status: "success",
       message: `${payload.count} VCPs started`,
->>>>>>> origin/main
     });
   }
 };
@@ -82,26 +65,6 @@ export const stopVcp = async (
   const { vcpId, vcpIdPrefix } = request.body;
 
   if (!vcpId && !vcpIdPrefix) {
-<<<<<<< HEAD
-    vcpList = [];
-
-    reply.send({ status: "sucess", message: "All VCPs stopped" });
-  }
-
-  if (vcpId) {
-    vcpList = vcpList.filter((vcp) => vcp.vcpOptions.chargePointId !== vcpId);
-
-    reply.send({ status: "sucess", message: `VCP with ID: ${vcpId} stopped` });
-  }
-
-  if (vcpIdPrefix) {
-    vcpList = vcpList.filter(
-      (vcp) => !vcp.vcpOptions.chargePointId.startsWith(vcpIdPrefix),
-    );
-
-    reply.send({
-      status: "sucess",
-=======
     for (let index = 0; index < vcpList.length; index++) {
       const vcp = vcpList[index];
 
@@ -145,7 +108,6 @@ export const stopVcp = async (
 
     return reply.send({
       status: "success",
->>>>>>> origin/main
       message: `VCPs with ID prefix: ${vcpIdPrefix} stopped`,
     });
   }
@@ -158,11 +120,7 @@ export const changeVcpStatus = async (
   const { chargePointId, action, payload } = request.body;
 
   const vcp = vcpList.find(
-<<<<<<< HEAD
-    (vcp) => vcp.vcpOptions.chargePointId === chargePointId,
-=======
     (vcp: VCP) => vcp.vcpOptions.chargePointId === chargePointId,
->>>>>>> origin/main
   );
 
   if (!vcp) {
@@ -175,11 +133,7 @@ export const changeVcpStatus = async (
     payload,
   });
 
-<<<<<<< HEAD
-  reply.send({ status: "sucess", message: "Status updated" });
-=======
   return reply.send({ status: "success", message: "Status updated" });
->>>>>>> origin/main
 };
 
 export const getVcpStatus = async (
@@ -187,12 +141,6 @@ export const getVcpStatus = async (
   reply: FastifyReply,
 ) => {
   const { verbose } = request.query;
-<<<<<<< HEAD
-  let response: any[] = [];
-
-  if (verbose) {
-    response = vcpList.map((vcp: VCP) => {
-=======
   let response: any = {};
 
   // count how many vcp in each status
@@ -217,40 +165,18 @@ export const getVcpStatus = async (
 
   if (verbose) {
     const vpcList = vcpList.map((vcp: VCP) => {
->>>>>>> origin/main
       return {
         isFinishing: vcp.isFinishing,
         isWaiting: vcp.isWaiting,
         lastAction: vcp.lastAction,
-<<<<<<< HEAD
-        connectorIDs: vcp.connectorIDs,
-=======
->>>>>>> origin/main
         status: vcp.status,
         ...vcp.vcpOptions,
       };
     });
-<<<<<<< HEAD
-  } else {
-    const data = vcpList.map((vcp: VCP) => {
-      return {
-        chargePointId: vcp.vcpOptions.chargePointId,
-        status: vcp.status,
-        endpoint: vcp.vcpOptions.endpoint,
-      };
-    });
-
-    response.push(data);
-    response.push({ meta: { count: data.length } });
-  }
-
-  reply.send({ status: "sucess", data: response });
-=======
     response = { ...response, vpcList: vpcList };
   }
 
   return reply.send({ status: "success", data: response });
->>>>>>> origin/main
 };
 
 async function startMultipleVcps(payload: StartVcpRequestSchema) {
@@ -258,22 +184,10 @@ async function startMultipleVcps(payload: StartVcpRequestSchema) {
     endpoint,
     idPrefix,
     count,
-<<<<<<< HEAD
-    sleepTime,
-=======
->>>>>>> origin/main
     startChance,
     testCharge,
     duration,
     randomDelay,
-<<<<<<< HEAD
-    isTwinGun,
-    ocppVersion,
-  } = payload;
-
-  const tasks: Promise<void>[] = [];
-  let adminWsPort = undefined;
-=======
     connectors,
     ocppVersion,
     model,
@@ -284,7 +198,6 @@ async function startMultipleVcps(payload: StartVcpRequestSchema) {
 
   const isTwinGun = connectors > 1;
   const connectorIds = computeConnectIds(connectors);
->>>>>>> origin/main
 
   for (let i = 1; i <= count!; i++) {
     const vcp = new VCP({
@@ -292,38 +205,24 @@ async function startMultipleVcps(payload: StartVcpRequestSchema) {
       chargePointId: idPrefix! + i,
       ocppVersion,
       isTwinGun,
-<<<<<<< HEAD
-      adminWsPort,
-    });
-
-    vcpList.push(vcp);
-=======
       connectorIds,
       model,
     });
 
     vcps.push(vcp);
->>>>>>> origin/main
 
     const task = (async () => {
       // Start each VCP a second apart
       await sleep(i * 1000);
       await vcp.connect();
-<<<<<<< HEAD
-      await bootVCP(vcp, sleepTime);
-=======
       await bootVCP(vcp);
->>>>>>> origin/main
     })();
 
     tasks.push(task);
   }
 
-<<<<<<< HEAD
-=======
   vcpList.push(...vcps);
 
->>>>>>> origin/main
   // Wait for all VCPs to be connected and initialized
   await Promise.all(tasks);
 
@@ -337,11 +236,7 @@ async function startMultipleVcps(payload: StartVcpRequestSchema) {
       console.log(`randomChance: ${randomChance}`);
 
       if (randomChance <= startChance) {
-<<<<<<< HEAD
-        return simulateCharge(vcp, duration, randomDelay);
-=======
         return simulateCharge(vcp, duration, 1, randomDelay);
->>>>>>> origin/main
       } else {
         return Promise.resolve();
       }
@@ -355,15 +250,6 @@ async function startSingleVcp(payload: StartVcpRequestSchema) {
   const {
     endpoint,
     chargePointId,
-<<<<<<< HEAD
-    sleepTime,
-    testCharge,
-    duration,
-    isTwinGun,
-    ocppVersion,
-  } = payload;
-
-=======
     testCharge,
     duration,
     connectors,
@@ -374,32 +260,17 @@ async function startSingleVcp(payload: StartVcpRequestSchema) {
   const isTwinGun = connectors > 1;
   const connectorIds = computeConnectIds(connectors);
 
->>>>>>> origin/main
   const vcp = new VCP({
     endpoint,
     chargePointId: chargePointId!,
     ocppVersion,
     isTwinGun,
-<<<<<<< HEAD
-=======
     connectorIds,
     model,
->>>>>>> origin/main
   });
 
   vcpList.push(vcp);
 
-<<<<<<< HEAD
-  (async () => {
-    await vcp.connect();
-    bootVCP(vcp, sleepTime);
-
-    if (testCharge) {
-      simulateCharge(vcp, duration);
-    }
-  })();
-}
-=======
   await (async () => {
     await vcp.connect();
     await bootVCP(vcp);
@@ -422,4 +293,3 @@ function computeConnectIds(connectors: number) {
 
   return connectorIds;
 }
->>>>>>> origin/main
