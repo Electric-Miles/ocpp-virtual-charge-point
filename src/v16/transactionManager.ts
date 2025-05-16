@@ -15,7 +15,7 @@ export class TransactionManager {
   private static transactionCount = 0;
 
   transactions: Map<string, TransactionState> = new Map();
-  vcpTransactionMap: Map<VCP, number> = new Map();
+  vcpTransactionMap: Map<string, number> = new Map();
   startTransaction(
     vcp: VCP,
     transactionId: number,
@@ -63,7 +63,7 @@ export class TransactionManager {
       meterValuesTimer: meterValuesTimer,
     });
     // set vcp mapping for transactions
-    this.vcpTransactionMap.set(vcp, transactionId);
+    this.vcpTransactionMap.set(vcp.vcpOptions.chargePointId+connectorId, transactionId);
 
     console.log(`connectorID: ${connectorId}, transactionID: ${transactionId}`)
     // for (const [key, value] of this.transactions.entries()) {
@@ -100,8 +100,8 @@ export class TransactionManager {
     return meterValue;
   }
 
-  getTransactionIdByVcp(vcp: VCP): number | undefined {
-    return this.vcpTransactionMap.get(vcp);
+  getTransactionIdByVcp(vcp: VCP, connectorId: number = 1): number | undefined {
+    return this.vcpTransactionMap.get(vcp.vcpOptions.chargePointId+connectorId);
   }
 }
 

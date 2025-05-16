@@ -14,6 +14,8 @@ import {
   validateOcppRequest,
   validateOcppResponse,
 } from "./jsonSchemaValidator";
+import {getFirmware, getVendor, sleep} from "./utils";
+import {transactionManager} from "./v16/transactionManager";
 
 interface VCPOptions {
   ocppVersion: OcppVersion;
@@ -22,6 +24,8 @@ interface VCPOptions {
   basicAuthPassword?: string;
   adminWsPort?: number;
   isTwinGun?: boolean; // if VCP is twingun, based on cli param
+  connectorIds?: number[];
+  model: string;
 }
 
 export class VCP {
@@ -34,14 +38,21 @@ export class VCP {
   public isTwinGun: boolean = false;
   public connectorIDs: number[];
   public status: string;
+  public model: string;
+  public vendor: string;
+  public version: string;
 
   constructor(public vcpOptions: VCPOptions) {
     this.messageHandler = resolveMessageHandler(vcpOptions.ocppVersion);
 
     this.vcpOptions.isTwinGun = this.vcpOptions.isTwinGun ?? false;
     this.isTwinGun = this.vcpOptions.isTwinGun ?? false;
-    this.connectorIDs = this.initializeConnectorIDs();
+    this.connectorIDs =
+      this.vcpOptions.connectorIds ?? this.initializeConnectorIDs();
     this.status = "Available";
+    this.model = this.vcpOptions.model ??  "EVC01";
+    this.vendor = getVendor(this.model);
+    this.version = getFirmware(this.model);
 
     if (vcpOptions.adminWsPort) {
       this.adminWs = new WebSocketServer({
@@ -119,17 +130,9 @@ export class VCP {
 
   async sendAndWait(ocppCall: OcppCall<any>) {
     if (this.isWaiting) {
-      // wait till isWaiting is false
-      const self = this;
-      await new Promise((resolve) => {
-        const interval = setInterval(() => {
-          //logger.info('waiting');
-          if (!self.isWaiting) {
-            clearInterval(interval);
-            this.sendAndWait(ocppCall);
-          }
-        }, 100);
-      });
+      // try again after 1 second
+      await sleep(1000);
+      await this.sendAndWait(ocppCall);
     } else {
       this.isWaiting = true;
       this.send(ocppCall);
@@ -243,5 +246,22 @@ export class VCP {
     }
     logger.info(`Connection closed. code=${code}, reason=${reason}`);
     process.exit();
+  }
+
+  disconnect() {
+    if (!this.ws) {
+      throw new Error(
+        "Trying to close a Websocket that was not opened. Call connect() first",
+      );
+    }
+
+    for (const connector of this.connectorIDs) {
+      let transactionId = transactionManager.getTransactionIdByVcp(this, connector);
+      if (transactionId) {
+        transactionManager.stopTransaction(transactionId);
+      }
+    }
+    this.isFinishing = true;
+    this.ws.close();
   }
 }

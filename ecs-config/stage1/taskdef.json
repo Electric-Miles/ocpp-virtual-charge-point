@@ -22,6 +22,14 @@
                 {
                     "name": "PORT",
                     "value": "3000"
+                },
+                {
+                    "name": "JWT_SECRET",
+                    "value": "AG9TYtPTDCS7be1eWWAq1q2gJ7pPsjDs"
+                },
+                {
+                    "name": "USERS_PASSWORD",
+                    "value": "P@55W0rd0!!"
                 }
             ],
             "environmentFiles": [],

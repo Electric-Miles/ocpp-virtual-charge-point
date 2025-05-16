@@ -1,18 +1,12 @@
 import "dotenv/config";
-import fastify from "fastify";
-import {
-  changeVcpStatus,
-  getVcpStatus,
-  startVcp,
-  stopVcp,
-} from "./controllers/chargePointController";
-import {
-  ChangeVcpStatusValidationSchema,
-  StartVcpValidationSchema,
-  StatusValidationSchema,
-  StopVcpValidationSchema,
-} from "./schema";
-import fs from 'fs';
+import fastify, { FastifyReply, FastifyRequest } from "fastify";
+import fs from "fs";
+import { authRoutes } from "./routes/auth";
+import fastifyJwt from "@fastify/jwt";
+import fastifyAuth from "@fastify/auth";
+import { chargePointRoutes } from "./routes/charge-point";
+import fastifyStatic from "@fastify/static";
+import path from "path";
 
 const app = fastify({
   logger: true,
@@ -21,42 +15,37 @@ const app = fastify({
 const host = process.env.HOST || "0.0.0.0";
 const port = Number(process.env.PORT) || 3000;
 
-app.post(
-  "/api/vcp/start",
-  {
-    schema: {
-      body: StartVcpValidationSchema,
-    },
-  },
-  startVcp,
-);
-app.post(
-  "/api/vcp/stop",
-  { schema: { body: StopVcpValidationSchema } },
-  stopVcp,
-);
-app.get(
-  "/api/vcp/status",
-  {
-    schema: {
-      querystring: StatusValidationSchema,
-    },
-  },
-  getVcpStatus,
-);
-app.post(
-  "/api/vcp/change-status",
-  {
-    schema: {
-      body: ChangeVcpStatusValidationSchema,
-    },
-  },
-  changeVcpStatus,
-);
-app.get('/control', async (request, reply) => {
-    const stream = fs.readFileSync('./public/control.html').toString()
-    reply.type('text/html').send(stream);
+app.register(fastifyStatic, {
+  root: path.join(__dirname, "../public"),
 });
+
+app.register(fastifyJwt, { secret: process.env.JWT_SECRET || "secret" });
+
+app
+  .decorate(
+    "verifyJwt",
+    async (request: FastifyRequest, reply: FastifyReply) => {
+      try {
+        await request.jwtVerify();
+      } catch (err) {
+        reply.send(err);
+      }
+    },
+  )
+  .register(fastifyAuth)
+  .after(() => {
+    app.register(chargePointRoutes, { prefix: "/api/vcp/" });
+    app.register(authRoutes);
+
+    app.get("/control", async (request, reply) => {
+      return reply.sendFile("control.html");
+    });
+  });
+
+app.get("/health", async (request, reply) => {
+  return reply.send("OK");
+});
+
 const start = async () => {
   try {
     await app.listen({ port, host });
