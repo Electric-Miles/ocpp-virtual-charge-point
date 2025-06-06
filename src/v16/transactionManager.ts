@@ -1,13 +1,14 @@
 import { call } from "../messageFactory";
 import { VCP } from "../vcp";
 
-const METER_VALUES_INTERVAL_SEC = 60;
+const METER_VALUES_INTERVAL_SEC = 30;
 
 interface TransactionState {
   transactionId: number;
   meterValue: number;
   startedAt: Date;
   connectorId: number;
+  lastMeterValue: number;
   meterValuesTimer?: NodeJS.Timeout;
 }
 
@@ -57,9 +58,10 @@ export class TransactionManager {
     // console.log(parseInt(process.env["INITIAL_METER_READINGS"] ?? '0'));
     this.transactions.set(transactionId.toString(), {
       transactionId: transactionId,
-      meterValue: parseInt(process.env["INITIAL_METER_READINGS"] ?? '0'),
+      meterValue: this.getStartTransactionStartMeterValue(vcp, connectorId),
       startedAt: new Date(),
       connectorId: connectorId,
+      lastMeterValue: 0,
       meterValuesTimer: meterValuesTimer,
     });
     // set vcp mapping for transactions
@@ -84,7 +86,7 @@ export class TransactionManager {
       console.log(`Clearing interval for transaction ${transactionId}`);
       clearInterval(transaction.meterValuesTimer);
     }
-    this.transactions.delete(transactionId.toString());
+    //this.transactions.delete(transactionId.toString());
   }
 
   getMeterValue(transactionId: number) {
@@ -97,11 +99,24 @@ export class TransactionManager {
     meterValue *= 1.24;
     meterValue = Math.round(meterValue);
     console.log(`getMeterValue meterValue: ${meterValue}`)
+    transaction.lastMeterValue = meterValue;
     return meterValue;
   }
 
   getTransactionIdByVcp(vcp: VCP, connectorId: number = 1): number | undefined {
     return this.vcpTransactionMap.get(vcp.vcpOptions.chargePointId+connectorId);
+  }
+
+  getStartTransactionStartMeterValue(vcp: VCP, connectorId: number = 1): number {
+    // use previous transaction meter value if exists
+    const transactionId = this.getTransactionIdByVcp(vcp, connectorId);
+    if (transactionId) {
+      const transaction = this.transactions.get(transactionId.toString());
+      if (transaction) {
+        return transaction.lastMeterValue;
+      }
+    }
+    return parseInt(process.env["INITIAL_METER_READINGS"] ?? '0');
   }
 }
 

@@ -128,62 +128,6 @@
                 </form>
               </div>
             
-              <input type="radio" name="my_tabs_2" class="tab" aria-label="Change Status" />
-            
-              <div id="changeStatus" class="tab-content bg-base-100 border-base-300 p-5">
-                <form id="changeStatusForm" class="space-y-4">
-                  <div>
-                    <label class="block mb-2 label">Charge Point ID</label>
-                    <input type="text" id="statusChargePointId" class="w-full input" placeholder="VCP_ALAN_01" required />
-                  </div>
-            
-                  <div>
-                    <label class="block mb-2 label">connectorId</label>
-                    <input type="number" id="connectorId" class="w-full input" value="1" min="1" required />
-                  </div>
-            
-                  <div>
-                    <label class="block mb-2 label">Status</label>
-                    <select id="status" class="w-full select" required>
-                      <option value="Available">Available</option>
-                      <option value="Charging">Charging</option>
-                      <option value="Faulted">Faulted</option>
-                      <option value="Finishing">Finishing</option>
-                      <option value="Preparing">Preparing</option>
-                      <option value="Reserved">Reserved</option>
-                      <option value="SuspendedEV">SuspendedEV</option>
-                      <option value="SuspendedEVSE">SuspendedEVSE</option>
-                      <option value="Unavailable">Unavailable</option>
-                    </select>
-                  </div>
-            
-                  <div>
-                    <label class="block mb-2 label">Error Code</label>
-                    <select id="errorCode" class="w-full select" required>
-                      <option value="NoError">NoError</option>
-                      <option value="InternalError">InternalError</option>
-                      <option value="EVCommunicationError">EVCommunicationError</option>
-                      <option value="PeakWait">PeakWait</option>
-                      <option value="ConnectorLockFailure">ConnectorLockFailure</option>
-                      <option value="GroundFailure">GroundFailure</option>
-                      <option value="HighTemperature">HighTemperature</option>
-                      <option value="LocalListConflict">LocalListConflict</option>
-                      <option value="OtherError">OtherError</option>
-                      <option value="OverCurrentFailure">OverCurrentFailure</option>
-                      <option value="PowerMeterFailure">PowerMeterFailure</option>
-                      <option value="PowerSwitchFailure">PowerSwitchFailure</option>
-                      <option value="ReaderFailure">ReaderFailure</option>
-                      <option value="ResetFailure">ResetFailure</option>
-                      <option value="UnderVoltage">UnderVoltage</option>
-                      <option value="OverVoltage">OverVoltage</option>
-                      <option value="WeakSignal">WeakSignal</option>
-                    </select>
-                  </div>
-            
-                  <button type="submit" class="btn btn-primary btn-block">Change Status</button>
-                </form>
-              </div>
-            
               <input type="radio" name="my_tabs_2" class="tab" aria-label="Stop VCPs" />
             
               <div id="stopVCP" class="tab-content bg-base-100 border-base-300 p-5">
@@ -222,6 +166,96 @@
                   <button type="submit" class="mt-4 btn btn-primary btn-block">Get Status</button>
                 </form>
               </div>
+
+              <input type="radio" name="my_tabs_2" class="tab" aria-label="Change Status" />
+
+              <div id="changeStatus" class="tab-content bg-base-100 border-base-300 p-5">
+                <form id="changeStatusForm" class="space-y-4">
+                  <div>
+                    <label class="block mb-2 label">Charge Point ID</label>
+                    <input type="text" id="statusChargePointId" class="w-full input" placeholder="VCP_ALAN_01" required />
+                  </div>
+
+                  <div>
+                    <label class="block mb-2 label">connectorId</label>
+                    <input type="number" id="connectorId" class="w-full input" value="1" min="1" required />
+                  </div>
+
+                  <div>
+                    <label class="block mb-2 label">Status</label>
+                    <select id="status" class="w-full select" required>
+                      <option value="Available">Available</option>
+                      <option value="Charging">Charging</option>
+                      <option value="Faulted">Faulted</option>
+                      <option value="Finishing">Finishing</option>
+                      <option value="Preparing">Preparing</option>
+                      <option value="Reserved">Reserved</option>
+                      <option value="SuspendedEV">SuspendedEV</option>
+                      <option value="SuspendedEVSE">SuspendedEVSE</option>
+                      <option value="Unavailable">Unavailable</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label class="block mb-2 label">Error Code</label>
+                    <select id="errorCode" class="w-full select" required>
+                      <option value="NoError">NoError</option>
+                      <option value="InternalError">InternalError</option>
+                      <option value="EVCommunicationError">EVCommunicationError</option>
+                      <option value="PeakWait">PeakWait</option>
+                      <option value="ConnectorLockFailure">ConnectorLockFailure</option>
+                      <option value="GroundFailure">GroundFailure</option>
+                      <option value="HighTemperature">HighTemperature</option>
+                      <option value="LocalListConflict">LocalListConflict</option>
+                      <option value="OtherError">OtherError</option>
+                      <option value="OverCurrentFailure">OverCurrentFailure</option>
+                      <option value="PowerMeterFailure">PowerMeterFailure</option>
+                      <option value="PowerSwitchFailure">PowerSwitchFailure</option>
+                      <option value="ReaderFailure">ReaderFailure</option>
+                      <option value="ResetFailure">ResetFailure</option>
+                      <option value="UnderVoltage">UnderVoltage</option>
+                      <option value="OverVoltage">OverVoltage</option>
+                      <option value="WeakSignal">WeakSignal</option>
+                    </select>
+                  </div>
+
+                  <button type="submit" class="btn btn-primary btn-block">Change Status</button>
+                </form>
+              </div>
+
+              <input type="radio" name="my_tabs_2" class="tab" aria-label="Send Command" />
+
+              <div id="sendCommand" class="tab-content bg-base-100 border-base-300 p-5">
+                <form id="sendCommandForm" class="space-y-4">
+                  <div>
+                    <label class="block mb-2 label">Charge Point ID</label>
+                    <input type="text" id="cmdChargePointId" class="w-full input" placeholder="VCP_ALAN_01" required />
+                  </div>
+
+                  <div>
+                    <label class="block mb-2 label">IDTag</label>
+                    <input type="text" id="cmdIdTag" class="w-full input" placeholder="1234" required />
+                  </div>
+
+                  <div>
+                    <label class="block mb-2 label">connectorId</label>
+                    <input type="number" id="cmdConnectorId" class="w-full input" value="1" min="1" required />
+                  </div>
+
+                  <div>
+                    <label class="block mb-2 label">Status</label>
+                    <select id="cmdAction" class="w-full select" required>
+                      <option value="Authorize">Authorize</option>
+                      <option value="StartTransaction">StartTransaction</option>
+                      <option value="Faulted Restart">Faulted Restart</option>
+                    </select>
+                  </div>
+
+                  <button type="submit" class="btn btn-primary btn-block">Send Command</button>
+
+                </form>
+              </div>
+
             </div>
             
             <div class="divider"></div>
@@ -381,6 +415,35 @@
 
         window.location.href = "/login";
       });
+
+
+      document
+              .getElementById("sendCommandForm")
+              .addEventListener("submit", function (event) {
+                event.preventDefault();
+
+                let payload = {};
+                let action = document.getElementById("cmdAction").value;
+                if (action === "Authorize") {
+                  payload = {
+                    idTag: document.getElementById("cmdIdTag").value,
+                  };
+                } else if (action === "StartTransaction" || action === "Faulted Restart") {
+                  payload = {
+                    idTag: document.getElementById("cmdIdTag").value,
+                    connectorId: Number(document.getElementById("cmdConnectorId").value),
+                    meterStart: 0,
+                    timestamp: new Date(),
+                  };
+                }
+
+                sendRequest("/api/vcp/send-command", "POST", {
+                  chargePointId: document.getElementById("cmdChargePointId").value,
+                  action:  action,
+                  payload: payload,
+                });
+              });
+
     </script>
   </body>
 </html>
