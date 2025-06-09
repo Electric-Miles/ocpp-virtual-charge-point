@@ -10,6 +10,7 @@ import {
   StatusRequestSchema,
   StopVcpRequestSchema,
 } from "../schema";
+import {transactionManager} from "../v16/transactionManager";
 
 let vcpList: VCP[] = [];
 
@@ -127,6 +128,8 @@ export const changeVcpStatus = async (
     return reply.send({ status: "error", message: "VCP not found" });
   }
 
+  console.log('action:'+action);
+
   vcp.send({
     action,
     messageId: uuid(),
@@ -134,6 +137,92 @@ export const changeVcpStatus = async (
   });
 
   return reply.send({ status: "success", message: "Status updated" });
+};
+
+export const sendCommand = async (
+    request: FastifyRequest<{ Body: ChangeVcpStatusRequestSchema }>,
+    reply: FastifyReply,
+) => {
+  const { chargePointId, action, payload } = request.body;
+
+  const vcp = vcpList.find(
+      (vcp: VCP) => vcp.vcpOptions.chargePointId === chargePointId,
+  );
+
+  if (!vcp) {
+    return reply.send({ status: "error", message: "VCP not found" });
+  }
+
+  // @ts-ignore
+  if (action == "Faulted Restart") {
+    // @ts-ignore
+    let connectorId = payload.connectorId || 1;
+    // @ts-ignore
+    let idTag = payload.idTag || 'AABBCCDD';
+
+    await vcp.sendAndWait({
+      messageId: uuid(),
+      action: "StatusNotification",
+      payload: {
+        connectorId: connectorId,
+        errorCode: "OtherError",
+        vendorErrorCode: "PENError",
+        status: "Faulted",
+        timestamp: new Date(),
+      },
+    });
+
+    let transId = transactionManager.getTransactionIdByVcp(vcp, connectorId) ?? 1;
+    console.log(`transactionId for stopNotif : ${transId}`);
+
+    await vcp.sendAndWait({
+      action: "StopTransaction",
+      messageId: uuid(),
+      payload: {
+        transactionId: transId,
+        timestamp: new Date(),
+        meterStop: transactionManager.getMeterValue(transId),
+      },
+    });
+
+    await vcp.sendAndWait({
+      action: "Authorize",
+      messageId: uuid(),
+      payload: {
+        idTag: idTag,
+      },
+    });
+
+    await vcp.sendAndWait({
+      action: "StartTransaction",
+      messageId: uuid(),
+      payload: {
+        idTag: idTag,
+        connectorId: connectorId,
+        meterStart: transactionManager.getMeterValue(transId),
+        timestamp: new Date(),
+      },
+    });
+
+    await vcp.sendAndWait({
+      messageId: uuid(),
+      action: "StatusNotification",
+      payload: {
+        connectorId: connectorId,
+        errorCode: "NoError",
+        status: "Charging",
+        timestamp: new Date(),
+      },
+    });
+  } else {
+    vcp.send({
+      action,
+      messageId: uuid(),
+      payload,
+    });
+  }
+
+  return reply.send({ status: "success", message: action+" Command Sent" });
 };
 
 export const getVcpStatus = async (

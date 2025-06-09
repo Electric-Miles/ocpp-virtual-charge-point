@@ -1,9 +1,9 @@
 import { FastifyInstance } from "fastify";
 import {
-  startVcp,
-  stopVcp,
-  getVcpStatus,
-  changeVcpStatus,
+    startVcp,
+    stopVcp,
+    getVcpStatus,
+    changeVcpStatus, sendCommand,
 } from "../controllers/chargePointController";
 import {
   StartVcpValidationSchema,
@@ -51,4 +51,14 @@ export async function chargePointRoutes(app: FastifyInstance) {
     },
     changeVcpStatus,
   );
+    app.post(
+        "send-command",
+        {
+            schema: {
+                body: ChangeVcpStatusValidationSchema,
+            },
+            preHandler: app.auth([app.verifyJwt]),
+        },
+        sendCommand,
+    );
 }
