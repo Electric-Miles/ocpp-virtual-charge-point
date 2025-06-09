@@ -223,38 +223,44 @@
                 </form>
               </div>
 
+              <!-- Send Command Tab -->
               <input type="radio" name="my_tabs_2" class="tab" aria-label="Send Command" />
 
               <div id="sendCommand" class="tab-content bg-base-100 border-base-300 p-5">
                 <form id="sendCommandForm" class="space-y-4">
                   <div>
+                    <label class="block mb-2 label">Command</label>
+                    <div id="cmdActionRadios" class="flex space-x-4 mt-2">
+                      <label><input type="radio" name="cmdAction" value="Faulted Restart" checked /> Faulted Restart</label>
+                      <label><input type="radio" name="cmdAction" value="Authorize"  /> Authorize</label>
+                      <label><input type="radio" name="cmdAction" value="StartTransaction" /> StartTransaction</label>
+                    </div>
+                  </div>
+
+                  <div id="cmdChargePointIdDiv">
                     <label class="block mb-2 label">Charge Point ID</label>
                     <input type="text" id="cmdChargePointId" class="w-full input" placeholder="VCP_ALAN_01" required />
                   </div>
 
-                  <div>
+                  <div id="cmdIdTagDiv">
                     <label class="block mb-2 label">IDTag</label>
                     <input type="text" id="cmdIdTag" class="w-full input" placeholder="1234" required />
                   </div>
 
-                  <div>
+                  <div id="cmdConnectorIdDiv">
                     <label class="block mb-2 label">connectorId</label>
                     <input type="number" id="cmdConnectorId" class="w-full input" value="1" min="1" required />
                   </div>
 
-                  <div>
-                    <label class="block mb-2 label">Status</label>
-                    <select id="cmdAction" class="w-full select" required>
-                      <option value="Authorize">Authorize</option>
-                      <option value="StartTransaction">StartTransaction</option>
-                      <option value="Faulted Restart">Faulted Restart</option>
-                    </select>
-                  </div>
+
 
                   <button type="submit" class="btn btn-primary btn-block">Send Command</button>
 
                 </form>
               </div>
+
+
+
 
             </div>
             
@@ -286,6 +292,7 @@
             } else {
               document.getElementById("first_name").textContent = data.data.first_name;
 
+              // set initial values from localStorage
               const chargePointId = localStorage.getItem("chargePointId");
               const idPrefix = localStorage.getItem("idPrefix");
               const endpoint = localStorage.getItem("endpoint");
@@ -293,6 +300,7 @@
               document.getElementById("statusChargePointId").value = chargePointId ?? idPrefix;
               document.getElementById("vcpId").value = chargePointId;
               document.getElementById("chargePointId").value = chargePointId;
+              document.getElementById("cmdChargePointId").value = chargePointId;
               document.getElementById("idPrefix").value = idPrefix;
               document.getElementById("vcpIdPrefix").value = idPrefix;
               if (endpoint) {
@@ -417,13 +425,33 @@
       });
 
 
+      // Add onChange listener for all radio buttons with name "cmdAction"
+            document.querySelectorAll('input[name="cmdAction"]').forEach((radio) => {
+              radio.addEventListener("change", (event) => {
+                // Your logic here, e.g.:
+                console.log(`Selected command: ${event.target.value}`);
+
+                var action = event.target.value;
+
+                // Show or hide fields based on the selected action
+                if (action === "StartTransaction" || action === "Faulted Restart") {
+                  document.getElementById("cmdConnectorIdDiv").style.display = "block";
+                } else {
+                  document.getElementById("cmdConnectorIdDiv").style.display = "none";
+                }
+              });
+            });
+
+
       document
               .getElementById("sendCommandForm")
               .addEventListener("submit", function (event) {
                 event.preventDefault();
 
                 let payload = {};
-                let action = document.getElementById("cmdAction").value;
+                const action = document.querySelector('input[name="cmdAction"]:checked').value;
+
+
                 if (action === "Authorize") {
                   payload = {
                     idTag: document.getElementById("cmdIdTag").value,
