@@ -138,6 +138,9 @@ const callHandlers: { [key: string]: CallHandler } = {
   DataTransfer: (vcp: VCP, call: OcppCall<any>) => {
     vcp.respond(callResult(call, { status: "Accepted" }));
   },
+  GetDiagnostics: (vcp: VCP, call: OcppCall) => {
+    vcp.respond(callResult(call, { fileName: "file.tar.gz" }));
+  },
 };
 
 const callResultHandlers: { [key: string]: CallResultHandler } = {
