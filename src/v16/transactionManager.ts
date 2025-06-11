@@ -6,6 +6,7 @@ const METER_VALUES_INTERVAL_SEC = 30;
 interface TransactionState {
   transactionId: number;
   meterValue: number;
+  socValue: number;
   startedAt: Date;
   connectorId: number;
   lastMeterValue: number;
@@ -34,12 +35,18 @@ export class TransactionManager {
                 {
                   value: (this.getMeterValue(transactionId)).toString(),
                   measurand: "Energy.Active.Import.Register",
-                  unit: "Wh",
+                  unit: "Wh"
                 },
                 {
                   value: "28.67",
                   measurand: "Current.Import",
-                  unit: "A",
+                  unit: "A"
+                },
+                {
+                  value: (this.getSoCValue(transactionId)).toString(),
+                  context: "Sample.Periodic",
+                  measurand: "SoC",
+                  unit: "Percent"
                 },
                 {
                   measurand: "Voltage",
@@ -63,6 +70,7 @@ export class TransactionManager {
       connectorId: connectorId,
       lastMeterValue: 0,
       meterValuesTimer: meterValuesTimer,
+      socValue: 10,
     });
     // set vcp mapping for transactions
     this.vcpTransactionMap.set(vcp.vcpOptions.chargePointId+connectorId, transactionId);
@@ -101,6 +109,20 @@ export class TransactionManager {
     console.log(`getMeterValue meterValue: ${meterValue}`)
     transaction.lastMeterValue = meterValue;
     return meterValue;
+  }
+
+  getSoCValue(transactionId: number) {
+    const transaction = this.transactions.get(transactionId.toString());
+    if (!transaction) {
+      return 10;
+    }
+
+    transaction.socValue++;
+    if (transaction.socValue > 100) {
+      transaction.socValue = 100;
+    }
+
+    return transaction.socValue;
   }
 
   getTransactionIdByVcp(vcp: VCP, connectorId: number = 1): number | undefined {
