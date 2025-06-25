@@ -9,8 +9,10 @@ export const getVendor = (model: string) => {
         return "Vestel";
     } else if (model.includes("KC-P")) {
         return "Keba";
+    } else if (model.includes("GL-EVIQ")) {
+        return "GL_EVIQ";
     } else {
-        return "Unknown";
+        return "Unknown-vendor";
     }
 }
 export const getFirmware = (model: string) => {
