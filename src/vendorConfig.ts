@@ -1,4 +1,70 @@
 export class VendorConfig {
+  // Vendor names
+  public static readonly VENDORS = {
+    ATESS: "ATESS",
+    VESTEL: "Vestel",
+    KEBA: "Keba",
+    GL_EVIQ: "GL_EVIQ",
+  } as const;
+
+  // Model patterns for vendor identification
+  public static readonly MODEL_PATTERNS = {
+    EVA: "EVA",
+    EVC: "EVC",
+    KC_P: "KC-P",
+    GL_EVIQ: "GL-EVIQ",
+  } as const;
+
+  // Specific models
+  public static readonly MODELS = {
+    EVC01: "EVC01",
+    EVA_07S_SE: "EVA-07S-SE",
+    EVC03: "EVC03",
+    KC_P30: "KC-P30",
+    GL_EVIQ07WRS: "GL-EVIQ07WRS",
+  } as const;
+
+  // Firmware versions
+  public static readonly FIRMWARE_VERSIONS = {
+    EVA_DEFAULT: "EVA-07S_SE-V4.2.9-20220610",
+    EVC_DEFAULT: "v4.28.0-1.5.154.0-v8.0.8",
+    DEFAULT: "1.0.0",
+  } as const;
+
+  /**
+   * Get vendor name based on model pattern
+   * @param model The model string to analyze
+   * @returns The vendor name or 'Unknown-vendor' if not found
+   */
+  public static getVendorFromModel(model: string): string {
+    if (model.includes(VendorConfig.MODEL_PATTERNS.EVA)) {
+      return VendorConfig.VENDORS.ATESS;
+    } else if (model.includes(VendorConfig.MODEL_PATTERNS.EVC)) {
+      return VendorConfig.VENDORS.VESTEL;
+    } else if (model.includes(VendorConfig.MODEL_PATTERNS.KC_P)) {
+      return VendorConfig.VENDORS.KEBA;
+    } else if (model.includes(VendorConfig.MODEL_PATTERNS.GL_EVIQ)) {
+      return VendorConfig.VENDORS.GL_EVIQ;
+    } else {
+      return "Unknown-vendor";
+    }
+  }
+
+  /**
+   * Get firmware version based on model pattern
+   * @param model The model string to analyze
+   * @returns The firmware version string
+   */
+  public static getFirmwareFromModel(model: string): string {
+    if (model.includes(VendorConfig.MODEL_PATTERNS.EVA)) {
+      return VendorConfig.FIRMWARE_VERSIONS.EVA_DEFAULT;
+    } else if (model.includes(VendorConfig.MODEL_PATTERNS.EVC)) {
+      return VendorConfig.FIRMWARE_VERSIONS.EVC_DEFAULT;
+    } else {
+      return VendorConfig.FIRMWARE_VERSIONS.DEFAULT;
+    }
+  }
+
   /**
    * Initialize configuration for a specific vendor/model
    *
@@ -13,7 +79,7 @@ export class VendorConfig {
     const vendorConfig: Record<string, any> = {};
 
     // Get the appropriate configuration based on vendor/model
-    if (vendor === "ATESS") {
+    if (vendor === VendorConfig.VENDORS.ATESS) {
       // Initialize with public ATESS configuration by default
       const atessPublicConfig = JSON.parse(
         VendorConfig.getAtessPublicConfiguration(),
@@ -37,7 +103,7 @@ export class VendorConfig {
           readonly: config.readonly,
         };
       });
-    } else if (model === "EVC03") {
+    } else if (model === VendorConfig.MODELS.EVC03) {
       const evc03Config = JSON.parse(VendorConfig.getEVC03Configuration());
 
       evc03Config.configurationKey.forEach((config: any) => {
@@ -46,7 +112,7 @@ export class VendorConfig {
           readonly: config.readonly,
         };
       });
-    } else if (vendor === "Vestel") {
+    } else if (vendor === VendorConfig.VENDORS.VESTEL) {
       const vestelConfig = JSON.parse(VendorConfig.getVestelConfiguration());
 
       vestelConfig.configurationKey.forEach((config: any) => {
@@ -55,7 +121,7 @@ export class VendorConfig {
           readonly: config.readonly,
         };
       });
-    } else if (vendor === "Keba") {
+    } else if (vendor === VendorConfig.VENDORS.KEBA) {
       const kebaConfig = JSON.parse(VendorConfig.getKebaConfiguration());
 
       kebaConfig.configurationKey.forEach((config: any) => {
@@ -64,7 +130,7 @@ export class VendorConfig {
           readonly: config.readonly,
         };
       });
-    } else if (vendor === "GL_EVIQ") {
+    } else if (vendor === VendorConfig.VENDORS.GL_EVIQ) {
       const glEviqConfig = JSON.parse(VendorConfig.getGlEviqConfiguration());
 
       glEviqConfig.configurationKey.forEach((config: any) => {
@@ -128,7 +194,7 @@ export class VendorConfig {
 
   /**
    * Check if key is for ATESS private configuration
-   * 
+   *
    * @param string key
    * @returns boolean
    */
@@ -152,43 +218,43 @@ export class VendorConfig {
 
   /**
    * Check if key is for ATESS public configuration
-   * 
+   *
    * @param string key
    * @returns boolean
    */
   public static isAtessPublicKey(key: string): boolean {
     return (
-      key === 'G_ChargerID' ||
-      key === 'G_ChargerRate' ||
-      key === 'G_ChargerLanguage' ||
-      key === 'G_MaxCurrent' ||
-      key === 'G_ChargerMode' ||
-      key === 'G_CardPin' ||
-      key === 'G_Authentication' ||
-      key === 'G_ChargerNetIP' ||
-      key === 'G_MaxTemperature' ||
-      key === 'G_ExternalLimitPower' ||
-      key === 'G_ExternalLimitPowerEnable' ||
-      key === 'G_ExternalSamplingCurWring' ||
-      key === 'G_SolarMode' ||
-      key === 'G_SolarLimitPower' ||
-      key === 'G_PeakValleyEnable' ||
-      key === 'G_AutoChargeTime' ||
-      key === 'G_RCDProtection' ||
-      key === 'G_PowerMeterAddr' ||
-      key === 'G_PowerMeterType' ||
-      key === 'G_TimeZone' ||
-      key === 'G_ServerURL' ||
-      key === 'G_RandDelayChargeTime' ||
-      key === 'HeartbeatInterval' ||
-      key === 'MeterValueSampleInterval' ||
-      key === 'WebSocketPingInterval' ||
-      key === 'ConnectionTimeOut' ||
-      key === 'LocalAuthorizeOffline' ||
-      key === 'AuthorizationCacheEnabled' ||
-      key === 'LocalPreAuthorize' ||
-      key === 'LocalAuthListEnabled' ||
-      key === 'AuthorizeRemoteTxRequests'
+      key === "G_ChargerID" ||
+      key === "G_ChargerRate" ||
+      key === "G_ChargerLanguage" ||
+      key === "G_MaxCurrent" ||
+      key === "G_ChargerMode" ||
+      key === "G_CardPin" ||
+      key === "G_Authentication" ||
+      key === "G_ChargerNetIP" ||
+      key === "G_MaxTemperature" ||
+      key === "G_ExternalLimitPower" ||
+      key === "G_ExternalLimitPowerEnable" ||
+      key === "G_ExternalSamplingCurWring" ||
+      key === "G_SolarMode" ||
+      key === "G_SolarLimitPower" ||
+      key === "G_PeakValleyEnable" ||
+      key === "G_AutoChargeTime" ||
+      key === "G_RCDProtection" ||
+      key === "G_PowerMeterAddr" ||
+      key === "G_PowerMeterType" ||
+      key === "G_TimeZone" ||
+      key === "G_ServerURL" ||
+      key === "G_RandDelayChargeTime" ||
+      key === "HeartbeatInterval" ||
+      key === "MeterValueSampleInterval" ||
+      key === "WebSocketPingInterval" ||
+      key === "ConnectionTimeOut" ||
+      key === "LocalAuthorizeOffline" ||
+      key === "AuthorizationCacheEnabled" ||
+      key === "LocalPreAuthorize" ||
+      key === "LocalAuthListEnabled" ||
+      key === "AuthorizeRemoteTxRequests"
     );
   }
 }

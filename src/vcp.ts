@@ -14,8 +14,8 @@ import {
   validateOcppRequest,
   validateOcppResponse,
 } from "./jsonSchemaValidator";
-import {getFirmware, getVendor, sleep} from "./utils";
-import {transactionManager} from "./v16/transactionManager";
+import { getFirmware, getVendor, sleep } from "./utils";
+import { transactionManager } from "./v16/transactionManager";
 import { VendorConfig } from "./vendorConfig";
 
 interface VCPOptions {
@@ -52,7 +52,7 @@ export class VCP {
     this.connectorIDs =
       this.vcpOptions.connectorIds ?? this.initializeConnectorIDs();
     this.status = "Available";
-    this.model = this.vcpOptions.model ??  "EVC01";
+    this.model = this.vcpOptions.model ?? VendorConfig.MODELS.EVC01;
     this.vendor = getVendor(this.model);
     this.version = getFirmware(this.model);
 
@@ -71,7 +71,10 @@ export class VCP {
     }
 
     // Initialize configuration object for the current vendor/model
-    this.vendorConfig = VendorConfig.initializeConfiguration(this.vendor, this.model);
+    this.vendorConfig = VendorConfig.initializeConfiguration(
+      this.vendor,
+      this.model,
+    );
   }
 
   async connect(): Promise<void> {
@@ -261,7 +264,10 @@ export class VCP {
     }
 
     for (const connector of this.connectorIDs) {
-      let transactionId = transactionManager.getTransactionIdByVcp(this, connector);
+      let transactionId = transactionManager.getTransactionIdByVcp(
+        this,
+        connector,
+      );
       if (transactionId) {
         transactionManager.stopTransaction(transactionId);
       }
@@ -276,25 +282,31 @@ export class VCP {
    * @returns JSON string with the appropriate configuration
    */
   public getVendorConfiguration(keys: string[] = []): string {
-    if (this.vendor === 'ATESS') {
+    if (this.vendor === VendorConfig.VENDORS.ATESS) {
       if (keys.length > 0) {
         return this.getAtessPrivateConfiguration();
       } else {
         return this.getAtessPublicConfiguration();
       }
-    } else if (this.model === 'EVC03' && keys.length === 0) {
+    } else if (this.model === VendorConfig.MODELS.EVC03 && keys.length === 0) {
       // vestel EVC03 DC
       // crashed adapter due to null value, fixed in adapter 1.16.0 release
       // adapter error: "String.toLowerCase()\" because the return value of \"io.solidstudio.emobility.ocpp.model_1_6.common.KeyValue.getValue()\" is null\
       return this.getEVC03Configuration();
-    } else if (this.vendor === 'Vestel' && keys.length === 0) {
+    } else if (
+      this.vendor === VendorConfig.VENDORS.VESTEL &&
+      keys.length === 0
+    ) {
       return this.getVestelConfiguration();
-    } else if (this.vendor === "Keba" && keys.length === 0) {
+    } else if (this.vendor === VendorConfig.VENDORS.KEBA && keys.length === 0) {
       return this.getKebaConfiguration();
-    } else if (this.vendor === "GL_EVIQ" && keys.length === 0) {
+    } else if (
+      this.vendor === VendorConfig.VENDORS.GL_EVIQ &&
+      keys.length === 0
+    ) {
       return this.getGlEviqConfiguration();
     }
-    
+
     return '{"configurationKey": []}';
   }
 
@@ -304,19 +316,21 @@ export class VCP {
    */
   private getAtessPrivateConfiguration(): string {
     // Filter configuration keys for ATESS hidden configuration
-    const configKeys = Object.keys(this.vendorConfig).filter(key => VendorConfig.isAtessPrivateKey(key));
-    
+    const configKeys = Object.keys(this.vendorConfig).filter((key) =>
+      VendorConfig.isAtessPrivateKey(key),
+    );
+
     if (configKeys.length === 0) {
       // Return default configuration if not initialized yet
       return VendorConfig.getAtessPrivateConfiguration();
     }
-    
-    const configArray = configKeys.map(key => ({
+
+    const configArray = configKeys.map((key) => ({
       key,
       value: this.vendorConfig[key].value,
-      readonly: this.vendorConfig[key].readonly
+      readonly: this.vendorConfig[key].readonly,
     }));
-    
+
     return JSON.stringify({ configurationKey: configArray });
   }
 
@@ -326,19 +340,21 @@ export class VCP {
    */
   public getAtessPublicConfiguration(): string {
     // Filter configuration keys for ATESS public configuration
-    const configKeys = Object.keys(this.vendorConfig).filter(key => VendorConfig.isAtessPublicKey(key));
-    
+    const configKeys = Object.keys(this.vendorConfig).filter((key) =>
+      VendorConfig.isAtessPublicKey(key),
+    );
+
     if (configKeys.length === 0) {
       // Return default configuration if not initialized yet
       return VendorConfig.getAtessPublicConfiguration();
     }
-    
-    const configArray = configKeys.map(key => ({
+
+    const configArray = configKeys.map((key) => ({
       key,
       value: this.vendorConfig[key].value,
-      readonly: this.vendorConfig[key].readonly
+      readonly: this.vendorConfig[key].readonly,
     }));
-    
+
     return JSON.stringify({ configurationKey: configArray });
   }
 
@@ -348,17 +364,20 @@ export class VCP {
    */
   public getEVC03Configuration(): string {
     // If this is not an EVC03 model or configuration is not initialized
-    if (this.model !== 'EVC03' || Object.keys(this.vendorConfig).length === 0) {
+    if (
+      this.model !== VendorConfig.MODELS.EVC03 ||
+      Object.keys(this.vendorConfig).length === 0
+    ) {
       // Return default configuration
       return VendorConfig.getEVC03Configuration();
     }
-    
-    const configArray = Object.keys(this.vendorConfig).map(key => ({
+
+    const configArray = Object.keys(this.vendorConfig).map((key) => ({
       key,
       value: this.vendorConfig[key].value,
-      readonly: this.vendorConfig[key].readonly
+      readonly: this.vendorConfig[key].readonly,
     }));
-    
+
     return JSON.stringify({ configurationKey: configArray });
   }
 
@@ -368,17 +387,20 @@ export class VCP {
    */
   public getVestelConfiguration(): string {
     // If this is not a Vestel vendor or configuration is not initialized
-    if (this.vendor !== 'Vestel' || Object.keys(this.vendorConfig).length === 0) {
+    if (
+      this.vendor !== VendorConfig.VENDORS.VESTEL ||
+      Object.keys(this.vendorConfig).length === 0
+    ) {
       // Return default configuration
       return VendorConfig.getVestelConfiguration();
     }
-    
-    const configArray = Object.keys(this.vendorConfig).map(key => ({
+
+    const configArray = Object.keys(this.vendorConfig).map((key) => ({
       key,
       value: this.vendorConfig[key].value,
-      readonly: this.vendorConfig[key].readonly
+      readonly: this.vendorConfig[key].readonly,
     }));
-    
+
     return JSON.stringify({ configurationKey: configArray });
   }
 
@@ -388,17 +410,20 @@ export class VCP {
    */
   public getKebaConfiguration(): string {
     // If this is not a Keba vendor or configuration is not initialized
-    if (this.vendor !== 'Keba' || Object.keys(this.vendorConfig).length === 0) {
+    if (
+      this.vendor !== VendorConfig.VENDORS.KEBA ||
+      Object.keys(this.vendorConfig).length === 0
+    ) {
       // Return default configuration
       return VendorConfig.getKebaConfiguration();
     }
-    
-    const configArray = Object.keys(this.vendorConfig).map(key => ({
+
+    const configArray = Object.keys(this.vendorConfig).map((key) => ({
       key,
       value: this.vendorConfig[key].value,
-      readonly: this.vendorConfig[key].readonly
+      readonly: this.vendorConfig[key].readonly,
     }));
-    
+
     return JSON.stringify({ configurationKey: configArray });
   }
 
@@ -408,17 +433,20 @@ export class VCP {
    */
   public getGlEviqConfiguration(): string {
     // If this is not a GL_EVIQ vendor or configuration is not initialized
-    if (this.vendor !== 'GL_EVIQ' || Object.keys(this.vendorConfig).length === 0) {
+    if (
+      this.vendor !== VendorConfig.VENDORS.GL_EVIQ ||
+      Object.keys(this.vendorConfig).length === 0
+    ) {
       // Return default configuration
       return VendorConfig.getGlEviqConfiguration();
     }
-    
-    const configArray = Object.keys(this.vendorConfig).map(key => ({
+
+    const configArray = Object.keys(this.vendorConfig).map((key) => ({
       key,
       value: this.vendorConfig[key].value,
-      readonly: this.vendorConfig[key].readonly
+      readonly: this.vendorConfig[key].readonly,
     }));
-    
+
     return JSON.stringify({ configurationKey: configArray });
   }
 
@@ -436,7 +464,7 @@ export class VCP {
       }
 
       this.vendorConfig[key].value = value;
-      
+
       return true;
     }
 
