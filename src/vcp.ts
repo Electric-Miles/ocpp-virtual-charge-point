@@ -282,28 +282,24 @@ export class VCP {
    * @returns JSON string with the appropriate configuration
    */
   public getVendorConfiguration(keys: string[] = []): string {
+    // If specific keys are requested, return only those keys
+    if (keys.length > 0) {
+      return this.getSpecificConfigurationKeys(keys);
+    }
+
+    // If no specific keys requested, return full configuration based on vendor/model
     if (this.vendor === VendorConfig.VENDORS.ATESS) {
-      if (keys.length > 0) {
-        return this.getAtessPrivateConfiguration();
-      } else {
-        return this.getAtessPublicConfiguration();
-      }
-    } else if (this.model === VendorConfig.MODELS.EVC03 && keys.length === 0) {
+      return this.getAtessPublicConfiguration();
+    } else if (this.model === VendorConfig.MODELS.EVC03) {
       // vestel EVC03 DC
       // crashed adapter due to null value, fixed in adapter 1.16.0 release
       // adapter error: "String.toLowerCase()\" because the return value of \"io.solidstudio.emobility.ocpp.model_1_6.common.KeyValue.getValue()\" is null\
       return this.getEVC03Configuration();
-    } else if (
-      this.vendor === VendorConfig.VENDORS.VESTEL &&
-      keys.length === 0
-    ) {
+    } else if (this.vendor === VendorConfig.VENDORS.VESTEL) {
       return this.getVestelConfiguration();
-    } else if (this.vendor === VendorConfig.VENDORS.KEBA && keys.length === 0) {
+    } else if (this.vendor === VendorConfig.VENDORS.KEBA) {
       return this.getKebaConfiguration();
-    } else if (
-      this.vendor === VendorConfig.VENDORS.GL_EVIQ &&
-      keys.length === 0
-    ) {
+    } else if (this.vendor === VendorConfig.VENDORS.GL_EVIQ) {
       return this.getGlEviqConfiguration();
     }
 
@@ -311,7 +307,32 @@ export class VCP {
   }
 
   /**
-   * Get configuration for ATESS vendor with specific keys
+   * Get specific configuration keys from vendor configuration
+   * @param keys Array of configuration keys to retrieve
+   * @returns JSON string with only the requested configuration keys
+   */
+  private getSpecificConfigurationKeys(keys: string[]): string {
+    const configArray: Array<{
+      key: string;
+      value: string;
+      readonly: boolean;
+    }> = [];
+
+    keys.forEach((key) => {
+      if (this.vendorConfig[key]) {
+        configArray.push({
+          key,
+          value: this.vendorConfig[key].value,
+          readonly: this.vendorConfig[key].readonly,
+        });
+      }
+    });
+
+    return JSON.stringify({ configurationKey: configArray });
+  }
+
+  /**
+   * Get configuration for ATESS vendor with private keys
    * @returns JSON string with hidden ATESS keys
    */
   private getAtessPrivateConfiguration(): string {
