@@ -14,8 +14,9 @@ import {
   validateOcppRequest,
   validateOcppResponse,
 } from "./jsonSchemaValidator";
-import {getFirmware, getVendor, sleep} from "./utils";
-import {transactionManager} from "./v16/transactionManager";
+import { getFirmware, getVendor, sleep } from "./utils";
+import { transactionManager } from "./v16/transactionManager";
+import { VendorConfig } from "./vendorConfig";
 
 interface VCPOptions {
   ocppVersion: OcppVersion;
@@ -41,6 +42,7 @@ export class VCP {
   public model: string;
   public vendor: string;
   public version: string;
+  private vendorConfig: Record<string, any> = {};
 
   constructor(public vcpOptions: VCPOptions) {
     this.messageHandler = resolveMessageHandler(vcpOptions.ocppVersion);
@@ -50,7 +52,7 @@ export class VCP {
     this.connectorIDs =
       this.vcpOptions.connectorIds ?? this.initializeConnectorIDs();
     this.status = "Available";
-    this.model = this.vcpOptions.model ??  "EVC01";
+    this.model = this.vcpOptions.model ?? VendorConfig.MODELS.EVC01;
     this.vendor = getVendor(this.model);
     this.version = getFirmware(this.model);
 
@@ -67,6 +69,12 @@ export class VCP {
         logger.error("Admin WebSocketServer Error: " + error);
       });
     }
+
+    // Initialize configuration object for the current vendor/model
+    this.vendorConfig = VendorConfig.initializeConfiguration(
+      this.vendor,
+      this.model,
+    );
   }
 
   async connect(): Promise<void> {
@@ -256,12 +264,231 @@ export class VCP {
     }
 
     for (const connector of this.connectorIDs) {
-      let transactionId = transactionManager.getTransactionIdByVcp(this, connector);
+      let transactionId = transactionManager.getTransactionIdByVcp(
+        this,
+        connector,
+      );
       if (transactionId) {
         transactionManager.stopTransaction(transactionId);
       }
     }
     this.isFinishing = true;
     this.ws.close();
+  }
+
+  /**
+   * Get vendor-specific configuration based on vendor, model and key parameters
+   * @param keys Array of configuration keys to filter by
+   * @returns JSON string with the appropriate configuration
+   */
+  public getVendorConfiguration(keys: string[] = []): string {
+    // If specific keys are requested, return only those keys
+    if (keys.length > 0) {
+      return this.getSpecificConfigurationKeys(keys);
+    }
+
+    // If no specific keys requested, return full configuration based on vendor/model
+    if (this.vendor === VendorConfig.VENDORS.ATESS) {
+      return this.getAtessPublicConfiguration();
+    } else if (this.model === VendorConfig.MODELS.EVC03) {
+      // vestel EVC03 DC
+      // crashed adapter due to null value, fixed in adapter 1.16.0 release
+      // adapter error: "String.toLowerCase()\" because the return value of \"io.solidstudio.emobility.ocpp.model_1_6.common.KeyValue.getValue()\" is null\
+      return this.getEVC03Configuration();
+    } else if (this.vendor === VendorConfig.VENDORS.VESTEL) {
+      return this.getVestelConfiguration();
+    } else if (this.vendor === VendorConfig.VENDORS.KEBA) {
+      return this.getKebaConfiguration();
+    } else if (this.vendor === VendorConfig.VENDORS.GL_EVIQ) {
+      return this.getGlEviqConfiguration();
+    }
+
+    return '{"configurationKey": []}';
+  }
+
+  /**
+   * Get specific configuration keys from vendor configuration
+   * @param keys Array of configuration keys to retrieve
+   * @returns JSON string with only the requested configuration keys
+   */
+  private getSpecificConfigurationKeys(keys: string[]): string {
+    const configArray: Array<{
+      key: string;
+      value: string;
+      readonly: boolean;
+    }> = [];
+
+    keys.forEach((key) => {
+      if (this.vendorConfig[key]) {
+        configArray.push({
+          key,
+          value: this.vendorConfig[key].value,
+          readonly: this.vendorConfig[key].readonly,
+        });
+      }
+    });
+
+    return JSON.stringify({ configurationKey: configArray });
+  }
+
+  /**
+   * Get configuration for ATESS vendor with private keys
+   * @returns JSON string with hidden ATESS keys
+   */
+  private getAtessPrivateConfiguration(): string {
+    // Filter configuration keys for ATESS hidden configuration
+    const configKeys = Object.keys(this.vendorConfig).filter((key) =>
+      VendorConfig.isAtessPrivateKey(key),
+    );
+
+    if (configKeys.length === 0) {
+      // Return default configuration if not initialized yet
+      return VendorConfig.getAtessPrivateConfiguration();
+    }
+
+    const configArray = configKeys.map((key) => ({
+      key,
+      value: this.vendorConfig[key].value,
+      readonly: this.vendorConfig[key].readonly,
+    }));
+
+    return JSON.stringify({ configurationKey: configArray });
+  }
+
+  /**
+   * Get configuration for ATESS vendor with no specific keys
+   * @returns JSON string with public ATESS keys
+   */
+  public getAtessPublicConfiguration(): string {
+    // Filter configuration keys for ATESS public configuration
+    const configKeys = Object.keys(this.vendorConfig).filter((key) =>
+      VendorConfig.isAtessPublicKey(key),
+    );
+
+    if (configKeys.length === 0) {
+      // Return default configuration if not initialized yet
+      return VendorConfig.getAtessPublicConfiguration();
+    }
+
+    const configArray = configKeys.map((key) => ({
+      key,
+      value: this.vendorConfig[key].value,
+      readonly: this.vendorConfig[key].readonly,
+    }));
+
+    return JSON.stringify({ configurationKey: configArray });
+  }
+
+  /**
+   * Get configuration for Vestel EVC03 DC model
+   * @returns JSON string with Vestel EVC03 DC configuration
+   */
+  public getEVC03Configuration(): string {
+    // If this is not an EVC03 model or configuration is not initialized
+    if (
+      this.model !== VendorConfig.MODELS.EVC03 ||
+      Object.keys(this.vendorConfig).length === 0
+    ) {
+      // Return default configuration
+      return VendorConfig.getEVC03Configuration();
+    }
+
+    const configArray = Object.keys(this.vendorConfig).map((key) => ({
+      key,
+      value: this.vendorConfig[key].value,
+      readonly: this.vendorConfig[key].readonly,
+    }));
+
+    return JSON.stringify({ configurationKey: configArray });
+  }
+
+  /**
+   * Get configuration for standard Vestel model
+   * @returns JSON string with Vestel configuration
+   */
+  public getVestelConfiguration(): string {
+    // If this is not a Vestel vendor or configuration is not initialized
+    if (
+      this.vendor !== VendorConfig.VENDORS.VESTEL ||
+      Object.keys(this.vendorConfig).length === 0
+    ) {
+      // Return default configuration
+      return VendorConfig.getVestelConfiguration();
+    }
+
+    const configArray = Object.keys(this.vendorConfig).map((key) => ({
+      key,
+      value: this.vendorConfig[key].value,
+      readonly: this.vendorConfig[key].readonly,
+    }));
+
+    return JSON.stringify({ configurationKey: configArray });
+  }
+
+  /**
+   * Get configuration for standard Keba model
+   * @returns JSON string with Vestel configuration
+   */
+  public getKebaConfiguration(): string {
+    // If this is not a Keba vendor or configuration is not initialized
+    if (
+      this.vendor !== VendorConfig.VENDORS.KEBA ||
+      Object.keys(this.vendorConfig).length === 0
+    ) {
+      // Return default configuration
+      return VendorConfig.getKebaConfiguration();
+    }
+
+    const configArray = Object.keys(this.vendorConfig).map((key) => ({
+      key,
+      value: this.vendorConfig[key].value,
+      readonly: this.vendorConfig[key].readonly,
+    }));
+
+    return JSON.stringify({ configurationKey: configArray });
+  }
+
+  /**
+   * Get configuration for standard GL_EVIQ model
+   * @returns JSON string with Vestel configuration
+   */
+  public getGlEviqConfiguration(): string {
+    // If this is not a GL_EVIQ vendor or configuration is not initialized
+    if (
+      this.vendor !== VendorConfig.VENDORS.GL_EVIQ ||
+      Object.keys(this.vendorConfig).length === 0
+    ) {
+      // Return default configuration
+      return VendorConfig.getGlEviqConfiguration();
+    }
+
+    const configArray = Object.keys(this.vendorConfig).map((key) => ({
+      key,
+      value: this.vendorConfig[key].value,
+      readonly: this.vendorConfig[key].readonly,
+    }));
+
+    return JSON.stringify({ configurationKey: configArray });
+  }
+
+  /**
+   * Update vendor-specific configuration based on vendor, model and key
+   * @param key Configuration key to update
+   * @param value New value for the configuration
+   * @returns boolean indicating success or failure
+   */
+  public updateVendorConfiguration(key: string, value: string): boolean {
+    // Check if key exists in the configuration
+    if (this.vendorConfig[key]) {
+      if (this.vendorConfig[key].readonly) {
+        return false; // Cannot update readonly config
+      }
+
+      this.vendorConfig[key].value = value;
+
+      return true;
+    }
+
+    return false; // Key not found
   }
 }
