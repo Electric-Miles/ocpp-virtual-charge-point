@@ -46,7 +46,7 @@ const callHandlers: { [key: string]: CallHandler } = {
   },
   RemoteStartTransaction: (
     vcp: VCP,
-    call: OcppCall<RemoteStartTransactionReq>
+    call: OcppCall<RemoteStartTransactionReq>,
   ) => {
     if (!call.payload.connectorId) {
       vcp.respond(callResult(call, { status: "Rejected" }));
@@ -57,25 +57,28 @@ const callHandlers: { [key: string]: CallHandler } = {
       callFactory("StartTransaction", {
         connectorId: call.payload.connectorId,
         idTag: call.payload.idTag,
-        meterStart: transactionManager.getStartTransactionStartMeterValue(vcp, call.payload.connectorId),
+        meterStart: transactionManager.getStartTransactionStartMeterValue(
+          vcp,
+          call.payload.connectorId,
+        ),
         timestamp: new Date(),
-      })
+      }),
     );
     vcp.send(
       callFactory("StatusNotification", {
         connectorId: call.payload.connectorId,
         errorCode: "NoError",
         status: "Charging",
-      })
+      }),
     );
   },
   RemoteStopTransaction: (
     vcp: VCP,
-    call: OcppCall<RemoteStopTransactionReq>
+    call: OcppCall<RemoteStopTransactionReq>,
   ) => {
     const transactionId = call.payload.transactionId;
     const transaction = transactionManager.transactions.get(
-      transactionId.toString()
+      transactionId.toString(),
     );
     if (!transaction) {
       vcp.respond(callResult(call, { status: "Rejected" }));
@@ -85,18 +88,16 @@ const callHandlers: { [key: string]: CallHandler } = {
     vcp.send(
       callFactory("StopTransaction", {
         transactionId: transactionId,
-        meterStop: Math.floor(
-          transactionManager.getMeterValue(transactionId)
-        ),
+        meterStop: Math.floor(transactionManager.getMeterValue(transactionId)),
         timestamp: new Date(),
-      })
+      }),
     );
     vcp.send(
       callFactory("StatusNotification", {
         connectorId: transaction.connectorId,
         errorCode: "NoError",
         status: "Finishing",
-      })
+      }),
     );
   },
   ReserveNow: (vcp: VCP, call: OcppCall<any>) => {
@@ -121,8 +122,21 @@ const callHandlers: { [key: string]: CallHandler } = {
   DataTransfer: (vcp: VCP, call: OcppCall<any>) => {
     vcp.respond(callResult(call, { status: "Accepted" }));
   },
-  GetDiagnostics: (vcp: VCP, call: OcppCall) => {
+  GetDiagnostics: async (vcp: VCP, call: OcppCall) => {
     vcp.respond(callResult(call, { fileName: "file.tar.gz" }));
+
+    // Send DiagnosticsStatusNotification with "Uploading" status
+    vcp.send(
+      callFactory("DiagnosticsStatusNotification", { status: "Uploading" }),
+    );
+
+    // Wait 5 seconds before sending the next notification
+    await delay(5000);
+
+    // Send DiagnosticsStatusNotification with "Uploaded" status
+    vcp.send(
+      callFactory("DiagnosticsStatusNotification", { status: "Uploaded" }),
+    );
   },
 };
 
@@ -130,7 +144,7 @@ const callResultHandlers: { [key: string]: CallResultHandler } = {
   BootNotification: (
     vcp: VCP,
     _call: OcppCall<any>,
-    _result: OcppCallResult<any>
+    _result: OcppCallResult<any>,
   ) => {
     vcp.configureHeartbeat(300_000);
   },
@@ -140,29 +154,29 @@ const callResultHandlers: { [key: string]: CallResultHandler } = {
   StartTransaction: (
     vcp: VCP,
     call: OcppCall<any>,
-    result: OcppCallResult<any>
+    result: OcppCallResult<any>,
   ) => {
     transactionManager.startTransaction(
       vcp,
       result.payload.transactionId,
-      call.payload.connectorId
+      call.payload.connectorId,
     );
   },
   StopTransaction: (
     _vcp: VCP,
     call: OcppCall<any>,
-    _result: OcppCallResult<any>
+    _result: OcppCallResult<any>,
   ) => {
     transactionManager.stopTransaction(call.payload.transactionId);
   },
   SecurityEventNotification: (
-      _vcp: VCP,
-      call: OcppCall<any>,
-      _result: OcppCallResult<any>
-  ) => {
-  },
+    _vcp: VCP,
+    call: OcppCall<any>,
+    _result: OcppCallResult<any>,
+  ) => {},
   Authorize: NOOP,
   DataTransfer: NOOP,
+  DiagnosticsStatusNotification: NOOP,
 };
 
 export const messageHandlerV16: OcppMessageHandler = {
@@ -176,12 +190,12 @@ export const messageHandlerV16: OcppMessageHandler = {
   handleCallResult: function (
     vcp: VCP,
     call: OcppCall<any>,
-    result: OcppCallResult<any>
+    result: OcppCallResult<any>,
   ): void {
     const handler = callResultHandlers[result.action];
     if (!handler) {
       throw new Error(
-        `CallResult handler not implemented for ${result.action}`
+        `CallResult handler not implemented for ${result.action}`,
       );
     }
     handler(vcp, call, result);
