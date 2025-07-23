@@ -10,8 +10,7 @@ export async function simulateCharge(
   randomDelay: boolean = false,
 ) {
   // Check if random delay is enabled and get max delay from vendor-specific configuration
-  const randomDelayMaxSeconds = vcp.getVendorRandomDelayMax();
-  const randomDelayEnabled = randomDelayMaxSeconds > 0;
+    const randomDelayMaxSeconds = randomDelay ? vcp.getVendorRandomDelayMax() : 0;
 
   const validConnectors = vcp.connectorIDs.filter(
     (connector) => connector !== 0,
@@ -26,7 +25,7 @@ export async function simulateCharge(
       console.log(`charge session count: ${i}`);
 
       // Apply random delay based on VCP configuration
-      if (!randomDelayEnabled) {
+      if (!randomDelay && randomDelayMaxSeconds === 0) {
         await sleep(500);
       } else {
         // TODO: send statusNotification

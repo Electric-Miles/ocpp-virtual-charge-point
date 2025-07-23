@@ -282,6 +282,7 @@ async function startMultipleVcps(payload: StartVcpRequestSchema) {
     startChance,
     testCharge,
     duration,
+    randomDelay,
     connectors,
     ocppVersion,
     model,
@@ -330,7 +331,7 @@ async function startMultipleVcps(payload: StartVcpRequestSchema) {
       console.log(`randomChance: ${randomChance}`);
 
       if (randomChance <= startChance) {
-        return simulateCharge(vcp, duration, 1); // random delay is purely configuration-driven
+        return simulateCharge(vcp, duration, 1, randomDelay);
       } else {
         return Promise.resolve();
       }
@@ -346,6 +347,7 @@ async function startSingleVcp(payload: StartVcpRequestSchema) {
     chargePointId,
     testCharge,
     duration,
+    randomDelay,
     connectors,
     ocppVersion,
     model,
@@ -370,7 +372,7 @@ async function startSingleVcp(payload: StartVcpRequestSchema) {
     await bootVCP(vcp);
 
     if (testCharge) {
-      await simulateCharge(vcp, duration, 1); // random delay is purely configuration-driven
+      await simulateCharge(vcp, duration, 1, randomDelay);
     }
   })();
 }
