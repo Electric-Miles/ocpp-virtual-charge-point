@@ -10,7 +10,7 @@ import {
   StatusRequestSchema,
   StopVcpRequestSchema,
 } from "../schema";
-import {transactionManager} from "../v16/transactionManager";
+import { transactionManager } from "../v16/transactionManager";
 
 let vcpList: VCP[] = [];
 
@@ -98,14 +98,14 @@ export const stopVcp = async (
 
   if (vcpIdPrefix) {
     vcpList
-        .filter((vcp: VCP) =>
-            vcp.vcpOptions.chargePointId.startsWith(vcpIdPrefix),
-        )
-        .forEach((vcp: VCP) => {
-          vcp.disconnect();
+      .filter((vcp: VCP) =>
+        vcp.vcpOptions.chargePointId.startsWith(vcpIdPrefix),
+      )
+      .forEach((vcp: VCP) => {
+        vcp.disconnect();
 
-          vcpList.splice(vcpList.indexOf(vcp), 1);
-        });
+        vcpList.splice(vcpList.indexOf(vcp), 1);
+      });
 
     return reply.send({
       status: "success",
@@ -128,7 +128,7 @@ export const changeVcpStatus = async (
     return reply.send({ status: "error", message: "VCP not found" });
   }
 
-  console.log('action:'+action);
+  console.log("action:" + action);
 
   vcp.send({
     action,
@@ -140,13 +140,13 @@ export const changeVcpStatus = async (
 };
 
 export const sendCommand = async (
-    request: FastifyRequest<{ Body: ChangeVcpStatusRequestSchema }>,
-    reply: FastifyReply,
+  request: FastifyRequest<{ Body: ChangeVcpStatusRequestSchema }>,
+  reply: FastifyReply,
 ) => {
   const { chargePointId, action, payload } = request.body;
 
   const vcp = vcpList.find(
-      (vcp: VCP) => vcp.vcpOptions.chargePointId === chargePointId,
+    (vcp: VCP) => vcp.vcpOptions.chargePointId === chargePointId,
   );
 
   if (!vcp) {
@@ -158,7 +158,7 @@ export const sendCommand = async (
     // @ts-ignore
     let connectorId = payload.connectorId || 1;
     // @ts-ignore
-    let idTag = payload.idTag || 'AABBCCDD';
+    let idTag = payload.idTag || "AABBCCDD";
 
     await vcp.sendAndWait({
       messageId: uuid(),
@@ -172,7 +172,8 @@ export const sendCommand = async (
       },
     });
 
-    let transId = transactionManager.getTransactionIdByVcp(vcp, connectorId) ?? 1;
+    let transId =
+      transactionManager.getTransactionIdByVcp(vcp, connectorId) ?? 1;
     console.log(`transactionId for stopNotif : ${transId}`);
 
     await vcp.sendAndWait({
@@ -222,7 +223,7 @@ export const sendCommand = async (
     });
   }
 
-  return reply.send({ status: "success", message: action+" Command Sent" });
+  return reply.send({ status: "success", message: action + " Command Sent" });
 };
 
 export const getVcpStatus = async (
@@ -250,7 +251,12 @@ export const getVcpStatus = async (
     return acc;
   }, {});
 
-  response = {meta:  {count: vcpList.length }, statusCount, endpointCount, modelCount};
+  response = {
+    meta: { count: vcpList.length },
+    statusCount,
+    endpointCount,
+    modelCount,
+  };
 
   if (verbose) {
     const vpcList = vcpList.map((vcp: VCP) => {
@@ -276,7 +282,6 @@ async function startMultipleVcps(payload: StartVcpRequestSchema) {
     startChance,
     testCharge,
     duration,
-    randomDelay,
     connectors,
     ocppVersion,
     model,
@@ -325,7 +330,7 @@ async function startMultipleVcps(payload: StartVcpRequestSchema) {
       console.log(`randomChance: ${randomChance}`);
 
       if (randomChance <= startChance) {
-        return simulateCharge(vcp, duration, 1, randomDelay);
+        return simulateCharge(vcp, duration, 1); // random delay is purely configuration-driven
       } else {
         return Promise.resolve();
       }
@@ -363,8 +368,9 @@ async function startSingleVcp(payload: StartVcpRequestSchema) {
   await (async () => {
     await vcp.connect();
     await bootVCP(vcp);
+
     if (testCharge) {
-      await simulateCharge(vcp, duration, 1, false);
+      await simulateCharge(vcp, duration, 1); // random delay is purely configuration-driven
     }
   })();
 }

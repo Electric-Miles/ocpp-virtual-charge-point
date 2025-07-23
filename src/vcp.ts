@@ -491,4 +491,40 @@ export class VCP {
 
     return false; // Key not found
   }
+
+  /**
+   * Get a configuration value from vendor configuration
+   * @param key Configuration key to retrieve
+   * @returns string value of the configuration key or undefined if not found
+   */
+  public getConfigurationValue(key: string): string | undefined {
+    if (this.vendorConfig[key]) {
+      return this.vendorConfig[key].value;
+    }
+
+    return undefined;
+  }
+
+  /**
+   * Get the vendor-specific random delay maximum value
+   * @returns Maximum delay in seconds for the current vendor, or 0 if not supported
+   */
+  public getVendorRandomDelayMax(): number {
+    const randomDelayConfigKey = VendorConfig.getVendorRandomDelayConfigKey(
+      this.vendor,
+    );
+
+    if (!randomDelayConfigKey) {
+      return 0; // Vendor doesn't support random delay
+    }
+
+    // Try to get the actual configured value from vendor configuration
+    const configuredValue = this.getConfigurationValue(randomDelayConfigKey);
+
+    if (configuredValue === undefined) {
+      return 0; // Vendor doesn't support random delay
+    }
+
+    return parseInt(configuredValue);
+  }
 }

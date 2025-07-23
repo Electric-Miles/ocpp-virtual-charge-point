@@ -17,7 +17,6 @@ export const StartVcpValidationSchema = {
     startChance: { type: "number" },
     testCharge: { type: "boolean" },
     duration: { type: "number" },
-    randomDelay: { type: "boolean" },
     connectors: { type: "number" },
     ocppVersion: { type: "string" },
   },
@@ -31,7 +30,6 @@ export interface StartVcpRequestSchema {
   startChance: number;
   testCharge: boolean;
   duration: number;
-  randomDelay: boolean;
   connectors: number;
   ocppVersion: OcppVersion;
   model: string;
