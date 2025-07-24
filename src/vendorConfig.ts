@@ -257,4 +257,57 @@ export class VendorConfig {
       key === "AuthorizeRemoteTxRequests"
     );
   }
+
+  /**
+   * Get the vendor-specific random delay configuration key
+   *
+   * @param vendor The vendor name
+   * @returns The key name and max delay in seconds, or null if not supported
+   */
+  public static getVendorRandomDelayConfigKey(vendor: string): string | null {
+    switch (vendor) {
+      case VendorConfig.VENDORS.ATESS:
+        return "G_RandDelayChargeTime";
+
+      case VendorConfig.VENDORS.VESTEL:
+        // Vestel has multiple random delay keys, prefer RandomisedDelayMaxSeconds
+        return "RandomisedDelayMaxSeconds";
+
+      case VendorConfig.VENDORS.KEBA:
+        return "RandomProfileMaxDelay";
+
+      case VendorConfig.VENDORS.GL_EVIQ:
+        return "G_RandDelayChargeTime";
+
+      default:
+        return null; // Vendor doesn't support random delay
+    }
+  }
+
+  /**
+   * Get the vendor-specific random delay status notification payload
+   *
+   * @param vendor The vendor name
+   * @param randomDelay The random delay in seconds, or null if not supported
+   * @returns The status notification payload, or null if not supported
+   */
+  public static getVendorRandomDelayStatusNotificationPayload(vendor: string, randomDelay: number | null = null) {
+    switch (vendor) {
+      case VendorConfig.VENDORS.ATESS:
+      case VendorConfig.VENDORS.GL_EVIQ:
+        return {
+          info: "RandDelayWait",
+          status: "Preparing",
+        };
+
+      case VendorConfig.VENDORS.VESTEL:
+        return {
+          info: `RandomizedDelay=${randomDelay}`,
+          status: "SuspendedEVSE",
+        };
+
+      default:
+        return null; // Vendor doesn't support random delay
+    }
+  }
 }
