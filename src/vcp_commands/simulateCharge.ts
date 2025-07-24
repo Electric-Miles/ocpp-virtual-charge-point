@@ -34,6 +34,8 @@ export async function simulateCharge(
       if (!randomDelay && randomDelayMaxSeconds === "0") {
         await sleep(500);
       } else {
+        const randomDelayNumber = generateRandomDelay(parseInt(randomDelayMaxSeconds));
+
         // initiate P&C charge session
         await vcp.sendAndWait({
           action: "StartTransaction",
@@ -46,24 +48,23 @@ export async function simulateCharge(
           },
         });
 
-        await vcp.sendAndWait({
-          action: "StatusNotification",
-          messageId: uuid.v4(),
-          payload: {
-            connectorId: connector,
-            errorCode: "NoError",
-            info: "RandDelayWait",
-            status: "Preparing",
-          },
-        });
+        const randomDelayStatusNotificationPayload = VendorConfig.getVendorRandomDelayStatusNotificationPayload(vcp.vendor, randomDelayNumber);
 
-        const randomDelay = generateRandomDelay(parseInt(randomDelayMaxSeconds));
+        if (randomDelayStatusNotificationPayload) {
+          await vcp.sendAndWait({
+            action: "StatusNotification",
+            messageId: uuid.v4(),
+            payload: {
+              connectorId: connector,
+              errorCode: "NoError",
+              ...randomDelayStatusNotificationPayload,
+            },
+          });
+        }
 
-        console.log(
-          `random delay of ${randomDelay}s applied (max configured: ${randomDelayMaxSeconds}s)...`,
-        );
+        console.log(`random delay of ${randomDelayNumber}s applied (max configured: ${randomDelayMaxSeconds}s)...`);
 
-        await sleep(randomDelay * 1000);
+        await sleep(randomDelayNumber * 1000);
       }
 
       // send charging statusNotification
