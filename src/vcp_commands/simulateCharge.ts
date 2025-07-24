@@ -2,6 +2,7 @@ import * as uuid from "uuid";
 import { VCP } from "../vcp";
 import { transactionManager } from "../v16/transactionManager";
 import { sleep, generateRandomDelay } from "../utils";
+import { VendorConfig } from "../vendorConfig";
 
 export async function simulateCharge(
   vcp: VCP,
@@ -9,8 +10,13 @@ export async function simulateCharge(
   countOfSessions: number,
   randomDelay: boolean = false,
 ) {
-  // Check if random delay is enabled and get max delay from vendor-specific configuration
-    const randomDelayMaxSeconds = randomDelay ? vcp.getVendorRandomDelayMax() : 0;
+  // Check if random delay is enabled and set max delay for vendor-specific configuration
+  const randomDelayMaxSeconds = randomDelay ? "600" : "0";
+  const randomDelayConfigKey = VendorConfig.getVendorRandomDelayConfigKey(vcp.vendor);
+
+  if (randomDelayConfigKey) {
+    vcp.updateVendorConfiguration(randomDelayConfigKey, randomDelayMaxSeconds);
+  }
 
   const validConnectors = vcp.connectorIDs.filter(
     (connector) => connector !== 0,
@@ -25,10 +31,20 @@ export async function simulateCharge(
       console.log(`charge session count: ${i}`);
 
       // Apply random delay based on VCP configuration
-      if (!randomDelay && randomDelayMaxSeconds === 0) {
+      if (!randomDelay && randomDelayMaxSeconds === "0") {
         await sleep(500);
       } else {
-        // TODO: send statusNotification
+        // initiate P&C charge session
+        await vcp.sendAndWait({
+          action: "StartTransaction",
+          messageId: uuid.v4(),
+          payload: {
+            connectorId: connector,
+            idTag: "freevenIdTag", // -> for P&C
+            meterStart: parseInt(process.env["INITIAL_METER_READINGS"] ?? "0"),
+            timestamp: new Date(),
+          },
+        });
 
         await vcp.sendAndWait({
           action: "StatusNotification",
@@ -41,7 +57,7 @@ export async function simulateCharge(
           },
         });
 
-        const randomDelay = generateRandomDelay(randomDelayMaxSeconds);
+        const randomDelay = generateRandomDelay(parseInt(randomDelayMaxSeconds));
 
         console.log(
           `random delay of ${randomDelay}s applied (max configured: ${randomDelayMaxSeconds}s)...`,
@@ -50,17 +66,6 @@ export async function simulateCharge(
         await sleep(randomDelay * 1000);
       }
 
-      // initiate P&C charge session
-      await vcp.sendAndWait({
-        action: "StartTransaction",
-        messageId: uuid.v4(),
-        payload: {
-          connectorId: connector,
-          idTag: "freevenIdTag", // -> for P&C
-          meterStart: parseInt(process.env["INITIAL_METER_READINGS"] ?? "0"),
-          timestamp: new Date(),
-        },
-      });
       // send charging statusNotification
       await sleep(1000);
       await vcp.sendAndWait({
