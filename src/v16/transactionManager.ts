@@ -11,6 +11,7 @@ interface TransactionState {
   connectorId: number;
   lastMeterValue: number;
   meterValuesTimer?: NodeJS.Timeout;
+  power: number;
 }
 
 export class TransactionManager {
@@ -71,6 +72,7 @@ export class TransactionManager {
       lastMeterValue: 0,
       meterValuesTimer: meterValuesTimer,
       socValue: 10,
+      power: vcp.power,
     });
     // set vcp mapping for transactions
     this.vcpTransactionMap.set(vcp.vcpOptions.chargePointId+connectorId, transactionId);
@@ -102,13 +104,21 @@ export class TransactionManager {
     if (!transaction) {
       return 0;
     }
-    // make meterValue not a neat round number
-    let meterValue = transaction.meterValue + ((new Date().getTime() - transaction.startedAt.getTime()) / 100);
-    meterValue *= 1.24;
-    meterValue = Math.round(meterValue);
-    console.log(`getMeterValue meterValue: ${meterValue}`)
-    transaction.lastMeterValue = meterValue;
-    return meterValue;
+
+    // calculate energy output from charger since start of session
+    // charger output in watts
+    const chargerPower = transaction.power * 1000;
+    // time in ms since start of session
+    const timeMs = (new Date().getTime() - transaction.startedAt.getTime());
+    // time in hours
+    const time = timeMs / 3600000;
+    // calc wh energy from start of session
+    const energy = Math.floor(transaction.meterValue + (chargerPower * time));
+
+    console.log(`getMeterValue energy: ${energy}`)
+    console.log(`getMeterValue charger power: ${ transaction.power}`)
+    transaction.lastMeterValue = energy;
+    return energy;
   }
 
   getSoCValue(transactionId: number) {

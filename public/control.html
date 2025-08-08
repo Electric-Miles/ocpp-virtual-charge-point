@@ -46,10 +46,17 @@
 
                   <div>
                     <label class="block mb-2 label">
-                      Charge Point ID <span class="optional">(optional)</span>
+                      Charge Point ID
                     </label>
                     <input type="text" id="chargePointId" class="w-full input" placeholder="VCP_ALAN_01" />
-                    <span class="mt-0.5 block text-sm text-base-content/60">Required if ID prefix is not provided.</span>
+                    <span class="mt-0.5 block text-sm text-base-content/60">If charger count > 1 then this is id prefix</span>
+                  </div>
+
+                  <div>
+                    <label class="block mb-2 label">
+                      Charger Count
+                    </label>
+                    <input type="number" class="w-full input" id="count" min="1" value="1" />
                   </div>
 
                   <div>
@@ -57,17 +64,9 @@
                     <input type="number" id="connectors" class="w-full input" min="1" value="1" />
                   </div>
 
-                  <div class="flex items-center space-x-4">
-                    <label for="testCharge" class="label">
-                      Auto Start Charge Session
-                    </label>
-                    <input type="checkbox" class="checkbox" id="testCharge" />
-                  </div>
-                  
                   <div>
-                    <label class="block mb-2 label">Auto Start Charge Session Duration</label>
-                    <input type="number" id="duration" class="w-full input" value="5" min="1" required />
-                    <span class="mt-0.5 block text-sm text-base-content/60">Used when auto charging - this is the duration of the session (minutes) </span>
+                    <label class="block mb-2 label">Charger Power kWh</label>
+                    <input type="number" id="power" class="w-full input" min="1" value="7" />
                   </div>
 
                   <div>
@@ -89,38 +88,34 @@
                     </select>
                   </div>
 
-                  <br>
-                  <h1>Start Multiple VCPs</h1>
+                  <div class="flex items-center space-x-4">
+                    <label for="testCharge" class="label">
+                      Auto Start Charge Session
+                    </label>
+                    <input type="checkbox" class="checkbox" id="testCharge" />
+                  </div>
 
-                  <div>
-                    <label class="block mb-2 label">
-                      ID Prefix <span class="optional">(optional - set to start multiple VCPs)</span>
-                    </label>
-                    <input type="text" id="idPrefix" class="w-full input" placeholder="VCP_TEST_" />
-                  </div>
-            
-                  <div>
-                    <label class="block mb-2 label">
-                      Charger Count
-                    </label>
-                    <input type="number" class="w-full input" id="count" min="1" value="1" />
-                  </div>
-            
-                  <div>
-                    <label class="block mb-2 label">
-                      Auto Start Charge Session % Chance <span class="optional">(optional)</span>
-                    </label>
-                    <input type="number" id="startChance" class="w-full input" placeholder="100" min="1" />
-                  </div>
-            
-                  <div>
-                    <div class="flex items-center space-x-4">
-                      <label for="randomDelay" class="label">
-                        Random Delay
-                      </label>
-                      <input type="checkbox" id="randomDelay" class="checkbox" />
-                    </div>
-                  </div>
+                          <div class="auto-start-options">
+                            <label class="block mb-2 label">Auto Start Charge Session Duration</label>
+                            <input type="number" id="duration" class="w-full input" value="5" min="1" required />
+                            <span class="mt-0.5 block text-sm text-base-content/60">Used when auto charging - this is the duration of the session (minutes) </span>
+                          </div>
+
+                          <div class="auto-start-options">
+                            <label class="block mb-2 label">
+                              Auto Start Charge Session % Chance <span class="optional">(optional)</span>
+                            </label>
+                            <input type="number" id="startChance" class="w-full input" placeholder="100" min="1" />
+                          </div>
+
+                          <div class="auto-start-options">
+                            <div class="flex items-center space-x-4">
+                              <label for="randomDelay" class="label">
+                                Random Delay
+                              </label>
+                              <input type="checkbox" id="randomDelay" class="checkbox" />
+                            </div>
+                          </div>
 
                   <br>
 
@@ -135,21 +130,20 @@
                 <form id="stopVCPForm" class="space-y-4">
                   <div>
                     <label class="block mb-2 label">
-                      VCP ID <span class="optional">(optional)</span>
+                      Charge Point ID <span class="optional">(optional)</span>
                     </label>
                     <input type="text" id="vcpId" class="w-full input" placeholder="VCP_ALAN_01" />
                   </div>
-            
-                  <div>
-                    <label class="block mb-2 label">
-                      VCP ID Prefix <span class="optional">(optional)</span>
-                    </label>
-                    <input type="text" id="vcpIdPrefix" class="w-full input" placeholder="VCP_TEST_" />
-                  </div>
-            
                   <p class="mt-0.5 block text-sm text-base-content/60">
-                    If neither VCP ID nor VCP ID prefix is provided, all running VCPs
-                    will be stopped.
+                    Leave blank to stop all VCPs
+                  </p>
+
+                  <div class="flex items-center space-x-4">
+                    <label for="isPrefix" class="label">Prefix ID</label>
+                    <input type="checkbox" id="isPrefix" class="checkbox" >
+                  </div>
+                  <p class="mt-0.5 block text-sm text-base-content/60">
+                    Stop all VCPs starting with id
                   </p>
             
                   <button type="submit" class="btn btn-primary btn-block">Stop</button>
@@ -256,7 +250,6 @@
                 </form>
               </div>
 
-
             </div>
             <div class="divider"></div>
             <div>
@@ -271,6 +264,26 @@
 
     <script>
       document.addEventListener('DOMContentLoaded', (event) => {
+        // add 'auto start' display fields toggle
+        const inputElement = document.getElementById("testCharge");
+        const autoStartOptions = document.querySelectorAll("div.auto-start-options");
+          if (inputElement && autoStartOptions.length > 0) {
+            inputElement.onclick = function () {
+              autoStartOptions.forEach(span => {
+                if (span.style.display === "none" || span.style.display === "") {
+                  span.style.display = "block";
+                } else {
+                  span.style.display = "none";
+                }
+              });
+            };
+        }
+        // hide onload
+       autoStartOptions.forEach(span => {
+          span.style.display = "none";
+        });
+
+
         fetch("/api/auth/user", {
           method: "GET",
           headers: {
@@ -287,15 +300,12 @@
 
               // set initial values from localStorage
               const chargePointId = localStorage.getItem("chargePointId");
-              const idPrefix = localStorage.getItem("idPrefix");
               const endpoint = localStorage.getItem("endpoint");
 
-              document.getElementById("statusChargePointId").value = chargePointId ?? idPrefix;
+              document.getElementById("statusChargePointId").value = chargePointId;
               document.getElementById("vcpId").value = chargePointId;
               document.getElementById("chargePointId").value = chargePointId;
               document.getElementById("cmdChargePointId").value = chargePointId;
-              document.getElementById("idPrefix").value = idPrefix;
-              document.getElementById("vcpIdPrefix").value = idPrefix;
               if (endpoint) {
                 document.getElementById("endpoint").value = endpoint;
               }
@@ -339,29 +349,19 @@
           event.preventDefault();
 
           const chargePointId = document.getElementById("chargePointId").value;
-          const idPrefix = document.getElementById("idPrefix").value;
           const endpoint = document.getElementById("endpoint").value;
 
           if (chargePointId) {
             localStorage.setItem("chargePointId", chargePointId);
-            localStorage.removeItem("idPrefix");
-          }
-
-          if (idPrefix) {
-            localStorage.setItem("idPrefix", idPrefix);
-            localStorage.removeItem("chargePointId");
           }
 
           localStorage.setItem("endpoint", endpoint);
 
-          document.getElementById("statusChargePointId").value =
-            chargePointId ?? idPrefix;
+          document.getElementById("statusChargePointId").value =chargePointId;
           document.getElementById("vcpId").value = chargePointId;
-          document.getElementById("vcpIdPrefix").value = idPrefix;
 
           sendRequest("/api/vcp/start", "POST", {
             chargePointId,
-            idPrefix,
             count: Number(document.getElementById("count").value),
             endpoint,
             startChance: Number(document.getElementById("startChance").value),
@@ -369,6 +369,7 @@
             duration: Number(document.getElementById("duration").value),
             randomDelay: document.getElementById("randomDelay").checked,
             connectors: document.getElementById("connectors").value,
+            power: document.getElementById("power").value,
             ocppVersion: document.getElementById("ocppVersion").value,
             model: document.getElementById("model").value,
           });
@@ -397,7 +398,7 @@
 
           sendRequest("/api/vcp/stop", "POST", {
             vcpId: document.getElementById("vcpId").value,
-            vcpIdPrefix: document.getElementById("vcpIdPrefix").value,
+            isPrefix: document.getElementById("isPrefix").checked,
           });
         });
 
@@ -464,6 +465,9 @@
                   payload: payload,
                 });
               });
+
+
+
 
     </script>
   </body>

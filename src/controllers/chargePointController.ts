@@ -20,7 +20,7 @@ export const startVcp = async (
 ) => {
   const payload = request.body;
 
-  if (payload.chargePointId) {
+  if (payload.count === 1) {
     const vcpWithChargePointId = vcpList.find(
       (vcp: VCP) => vcp.vcpOptions.chargePointId === payload.chargePointId,
     );
@@ -32,21 +32,21 @@ export const startVcp = async (
       });
     }
 
-    startSingleVcp(payload);
+    startMultipleVcps(payload);
 
     return reply.send({
       status: "success",
-      message: `VCP with ${payload.chargePointId} started`,
+      message: `${payload.chargePointId} VCP started`,
     });
   } else {
     const vcpWithIdPrefix = vcpList.find((vcp: VCP) =>
-      vcp.vcpOptions.chargePointId.startsWith(payload.idPrefix!),
+      vcp.vcpOptions.chargePointId.startsWith(payload.chargePointId!),
     );
 
     if (vcpWithIdPrefix) {
       return reply.send({
         status: "error",
-        message: `VCPs with ${payload.idPrefix} already started`,
+        message: `VCPs with ${payload.chargePointId} already started`,
       });
     }
 
@@ -54,7 +54,7 @@ export const startVcp = async (
 
     return reply.send({
       status: "success",
-      message: `${payload.count} VCPs started`,
+      message: `${payload.count} VCPs started with prefix ${payload.chargePointId}`,
     });
   }
 };
@@ -63,21 +63,18 @@ export const stopVcp = async (
   request: FastifyRequest<{ Body: StopVcpRequestSchema }>,
   reply: FastifyReply,
 ) => {
-  const { vcpId, vcpIdPrefix } = request.body;
+  const { vcpId, isPrefix } = request.body;
 
-  if (!vcpId && !vcpIdPrefix) {
+  if (!vcpId) {
     for (let index = 0; index < vcpList.length; index++) {
       const vcp = vcpList[index];
-
       vcp.disconnect();
-
       vcpList.splice(index, 1);
     }
-
     return reply.send({ status: "success", message: "All VCPs stopped" });
   }
 
-  if (vcpId) {
+  if (vcpId && !isPrefix) {
     const vcp = vcpList.find(
       (vcp: VCP) => vcp.vcpOptions.chargePointId === vcpId,
     );
@@ -96,10 +93,10 @@ export const stopVcp = async (
     });
   }
 
-  if (vcpIdPrefix) {
+  if (vcpId && isPrefix) {
     vcpList
       .filter((vcp: VCP) =>
-        vcp.vcpOptions.chargePointId.startsWith(vcpIdPrefix),
+        vcp.vcpOptions.chargePointId.startsWith(vcpId),
       )
       .forEach((vcp: VCP) => {
         vcp.disconnect();
@@ -109,7 +106,7 @@ export const stopVcp = async (
 
     return reply.send({
       status: "success",
-      message: `VCPs with ID prefix: ${vcpIdPrefix} stopped`,
+      message: `VCPs with ID prefix: ${vcpId} stopped`,
     });
   }
 };
@@ -277,13 +274,14 @@ export const getVcpStatus = async (
 async function startMultipleVcps(payload: StartVcpRequestSchema) {
   const {
     endpoint,
-    idPrefix,
+    chargePointId,
     count,
     startChance,
     testCharge,
     duration,
     randomDelay,
     connectors,
+    power,
     ocppVersion,
     model,
   } = payload;
@@ -297,20 +295,21 @@ async function startMultipleVcps(payload: StartVcpRequestSchema) {
   for (let i = 1; i <= count!; i++) {
     const vcp = new VCP({
       endpoint,
-      chargePointId: idPrefix! + i,
+      chargePointId: (count === 1 ? chargePointId! : chargePointId! + i),
       ocppVersion,
       isTwinGun,
       connectorIds,
       model,
+      power,
     });
 
     vcps.push(vcp);
 
     const task = (async () => {
-      // Start each VCP a second apart
-      await sleep(i * 1000);
       await vcp.connect();
       await bootVCP(vcp);
+      // Start each VCP a second apart
+      await sleep(i * 1000);
     })();
 
     tasks.push(task);
@@ -341,41 +340,6 @@ async function startMultipleVcps(payload: StartVcpRequestSchema) {
   }
 }
 
-async function startSingleVcp(payload: StartVcpRequestSchema) {
-  const {
-    endpoint,
-    chargePointId,
-    testCharge,
-    duration,
-    randomDelay,
-    connectors,
-    ocppVersion,
-    model,
-  } = payload;
-
-  const isTwinGun = connectors > 1;
-  const connectorIds = computeConnectIds(connectors);
-
-  const vcp = new VCP({
-    endpoint,
-    chargePointId: chargePointId!,
-    ocppVersion,
-    isTwinGun,
-    connectorIds,
-    model,
-  });
-
-  vcpList.push(vcp);
-
-  await (async () => {
-    await vcp.connect();
-    await bootVCP(vcp);
-
-    if (testCharge) {
-      await simulateCharge(vcp, duration, 1, randomDelay);
-    }
-  })();
-}
 
 function computeConnectIds(connectors: number) {
   const connectorIds = [];

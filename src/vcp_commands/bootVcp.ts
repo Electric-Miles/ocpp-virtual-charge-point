@@ -3,8 +3,7 @@ import { VCP } from "../vcp";
 import { sleep } from "../utils";
 
 export async function bootVCP(vcp: VCP, sleepTime: number = 500) {
-  if (vcp.isTwinGun) {
-    console.log("loading twingun VCP...");
+    console.log("loading VCP...");
     console.log("Connector IDs:", vcp.connectorIDs);
 
     await sleep(500);
@@ -45,30 +44,5 @@ export async function bootVCP(vcp: VCP, sleepTime: number = 500) {
         );
       }
     }
-    console.log("twingun VCP successfully loaded...");
-  } else {
-    console.log("loading single connector VCP...");
-    await sleep(100);
-    await vcp.sendAndWait({
-      messageId: uuid.v4(),
-      action: "BootNotification",
-      payload: {
-        chargePointVendor: vcp.vendor,
-        chargePointModel: vcp.model,
-        chargePointSerialNumber: "S001",
-        firmwareVersion: vcp.version,
-      },
-    });
-    await sleep(100);
-    await vcp.sendAndWait({
-      messageId: uuid.v4(),
-      action: "StatusNotification",
-      payload: {
-        connectorId: vcp.connectorIDs[0],
-        errorCode: "NoError",
-        status: "Preparing",
-      },
-    });
-    console.log("single connector VCP successfully loaded...");
-  }
+    console.log("VCP successfully loaded...");
 }

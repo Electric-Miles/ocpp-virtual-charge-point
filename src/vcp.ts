@@ -27,6 +27,7 @@ interface VCPOptions {
   isTwinGun?: boolean; // if VCP is twingun, based on cli param
   connectorIds?: number[];
   model: string;
+  power: number;
 }
 
 export class VCP {
@@ -42,6 +43,7 @@ export class VCP {
   public model: string;
   public vendor: string;
   public version: string;
+  public power: number;
   private vendorConfig: Record<string, any> = {};
 
   constructor(public vcpOptions: VCPOptions) {
@@ -53,6 +55,7 @@ export class VCP {
       this.vcpOptions.connectorIds ?? this.initializeConnectorIDs();
     this.status = "Available";
     this.model = this.vcpOptions.model ?? VendorConfig.MODELS.EVC01;
+    this.power = this.vcpOptions.power ?? 7;
     this.vendor = getVendor(this.model);
     this.version = getFirmware(this.model);
 

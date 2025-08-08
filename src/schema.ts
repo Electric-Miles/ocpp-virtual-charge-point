@@ -26,13 +26,13 @@ export const StartVcpValidationSchema = {
 export interface StartVcpRequestSchema {
   endpoint: string;
   chargePointId?: string;
-  idPrefix?: string;
   count?: number;
   startChance: number;
   testCharge: boolean;
   duration: number;
   randomDelay: boolean;
   connectors: number;
+  power: number;
   ocppVersion: OcppVersion;
   model: string;
 }
@@ -76,7 +76,7 @@ export const ChangeVcpStatusValidationSchema = {
 
 export interface StopVcpRequestSchema {
   vcpId?: string;
-  vcpIdPrefix?: string;
+  isPrefix?: boolean;
 }
 
 export const StopVcpValidationSchema = {
