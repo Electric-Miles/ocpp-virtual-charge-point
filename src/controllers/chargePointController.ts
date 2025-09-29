@@ -140,7 +140,7 @@ export const sendCommand = async (
   request: FastifyRequest<{ Body: ChangeVcpStatusRequestSchema }>,
   reply: FastifyReply,
 ) => {
-  const { chargePointId, action, payload } = request.body;
+  const { chargePointId, action, payload }: { chargePointId: string; action: string; payload: any } = request.body;
 
   const vcp = vcpList.find(
     (vcp: VCP) => vcp.vcpOptions.chargePointId === chargePointId,
@@ -150,11 +150,9 @@ export const sendCommand = async (
     return reply.send({ status: "error", message: "VCP not found" });
   }
 
-  // @ts-ignore
   if (action == "Faulted Restart") {
-    // @ts-ignore
+
     let connectorId = payload.connectorId || 1;
-    // @ts-ignore
     let idTag = payload.idTag || "AABBCCDD";
 
     await vcp.sendAndWait({
@@ -170,7 +168,7 @@ export const sendCommand = async (
     });
 
     let transId =
-      transactionManager.getTransactionIdByVcp(vcp, connectorId) ?? 1;
+        transactionManager.getTransactionIdByVcp(vcp, connectorId) ?? 1;
     console.log(`transactionId for stopNotif : ${transId}`);
 
     await vcp.sendAndWait({
@@ -211,6 +209,18 @@ export const sendCommand = async (
         status: "Charging",
         timestamp: new Date(),
       },
+    });
+  } else if (action == "StopTransaction") {
+    // add last transaction id to payload
+    payload.transactionId = transactionManager.getTransactionIdByVcp(vcp, payload.connectorId);
+    if (!payload.transactionId) {
+      return reply.send({ status: "error", message: "Transaction not found" });
+    }
+    delete payload.connectorId;
+    vcp.send({
+      action,
+      messageId: uuid(),
+      payload,
     });
   } else {
     vcp.send({
