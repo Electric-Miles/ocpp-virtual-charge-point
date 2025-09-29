@@ -5,6 +5,7 @@ export class VendorConfig {
     VESTEL: "Vestel",
     KEBA: "Keba",
     GL_EVIQ: "GL_EVIQ",
+    EN_PLUS: "EN+",
   } as const;
 
   // Model patterns for vendor identification
@@ -13,6 +14,7 @@ export class VendorConfig {
     EVC: "EVC",
     KC_P: "KC-P",
     GL_EVIQ: "GL-EVIQ",
+    EN_PLUS_22KW: "AC022K"
   } as const;
 
   // Specific models
@@ -22,6 +24,7 @@ export class VendorConfig {
     EVC03: "EVC03",
     KC_P30: "KC-P30",
     GL_EVIQ07WRS: "GL-EVIQ07WRS",
+    AC022K_BE_24: "AC022K-BE-24", // AC022K-BE-24 AC044K-BE-44D
   } as const;
 
   // Firmware versions
@@ -29,6 +32,7 @@ export class VendorConfig {
     EVA_DEFAULT: "EVA-07S_SE-V4.2.9-20220610",
     EVC_DEFAULT: "v4.28.0-1.5.154.0-v8.0.8",
     DEFAULT: "1.0.0",
+    EN_PLUS_22KW_DEFAULT: "1.4.918",
   } as const;
 
   /**
@@ -45,6 +49,8 @@ export class VendorConfig {
       return VendorConfig.VENDORS.KEBA;
     } else if (model.includes(VendorConfig.MODEL_PATTERNS.GL_EVIQ)) {
       return VendorConfig.VENDORS.GL_EVIQ;
+    } else if (model.includes(VendorConfig.MODEL_PATTERNS.EN_PLUS_22KW)) {
+      return VendorConfig.VENDORS.EN_PLUS;
     } else {
       return "Unknown-vendor";
     }
@@ -60,6 +66,8 @@ export class VendorConfig {
       return VendorConfig.FIRMWARE_VERSIONS.EVA_DEFAULT;
     } else if (model.includes(VendorConfig.MODEL_PATTERNS.EVC)) {
       return VendorConfig.FIRMWARE_VERSIONS.EVC_DEFAULT;
+    } else if (model.includes(VendorConfig.MODEL_PATTERNS.EN_PLUS_22KW)) {
+      return VendorConfig.FIRMWARE_VERSIONS.EN_PLUS_22KW_DEFAULT;
     } else {
       return VendorConfig.FIRMWARE_VERSIONS.DEFAULT;
     }
@@ -134,6 +142,15 @@ export class VendorConfig {
       const glEviqConfig = JSON.parse(VendorConfig.getGlEviqConfiguration());
 
       glEviqConfig.configurationKey.forEach((config: any) => {
+        vendorConfig[config.key] = {
+          value: config.value,
+          readonly: config.readonly,
+        };
+      });
+    } else if (vendor === VendorConfig.VENDORS.EN_PLUS) {
+      const enPlus22kWConfig = JSON.parse(VendorConfig.getEnPlus22kWConfiguration());
+
+      enPlus22kWConfig.configurationKey.forEach((config: any) => {
         vendorConfig[config.key] = {
           value: config.value,
           readonly: config.readonly,
@@ -256,6 +273,14 @@ export class VendorConfig {
       key === "LocalAuthListEnabled" ||
       key === "AuthorizeRemoteTxRequests"
     );
+  }
+
+  /**
+   * Get configuration for EN+ 22kW charger
+   * @returns JSON string with EN+ configuration
+   */
+  public static getEnPlus22kWConfiguration(): string {
+    return '{"configurationKey":[{"key":"AllowOfflineTxForUnknownId","readonly":false,"value":"false"},{"key":"AuthorizationCacheEnabled","readonly":false,"value":"false"},{"key":"AuthorizeRemoteTxRequests","readonly":false,"value":"false"},{"key":"BlinkRepeat","readonly":false,"value":"0"},{"key":"ClockAlignedDataInterval","readonly":false,"value":"0"},{"key":"ConnectionTimeOut","readonly":false,"value":"180"},{"key":"ConnectorPhaseRotationMaxLength","readonly":false,"value":"120"},{"key":"GetConfigurationMaxKeys","readonly":false,"value":"50"},{"key":"HeartbeatInterval","readonly":false,"value":"300"},{"key":"LocalAuthorizeOffline","readonly":false,"value":"true"},{"key":"LocalPreAuthorize","readonly":false,"value":"false"},{"key":"MaxEnergyOnInvalidId","readonly":false,"value":"3000"},{"key":"MeterValuesAlignedData","readonly":false,"value":"Energy.Active.Import.Register,Current.Import,Voltage"},{"key":"MeterValuesAlignedDataMaxLength","readonly":false,"value":"120"},{"key":"MeterValuesSampledData","readonly":false,"value":"Current.Import,Energy.Active.Import.Register,Voltage"},{"key":"MeterValuesSampledDataMaxLength","readonly":false,"value":"120"},{"key":"MeterValueSampleInterval","readonly":false,"value":"60"},{"key":"MinimumStatusDuration","readonly":false,"value":"0"},{"key":"NumberOfConnectors","readonly":false,"value":"1"},{"key":"ResetRetries","readonly":false,"value":"0"},{"key":"StopTransactionOnEVSideDisconnect","readonly":false,"value":"false"},{"key":"StopTransactionOnInvalidId","readonly":false,"value":"true"},{"key":"StopTxnAlignedData","readonly":false,"value":""},{"key":"StopTxnAlignedDataMaxLength","readonly":false,"value":"120"},{"key":"SupportedFeatureProfiles","readonly":false,"value":"Core,Reservation,FirmwareManagement,LocalAuthListManagement,RemoteTrigger,SmartCharging"},{"key":"SupportedFeatureProfilesMaxLength","readonly":false,"value":"120"},{"key":"TransactionMessageAttempts","readonly":false,"value":"0"},{"key":"TransactionMessageRetryInterval","readonly":false,"value":"15"},{"key":"UnlockConnectorOnEVSideDisconnect","readonly":false,"value":"true"},{"key":"WebSocketPingInterval","readonly":false,"value":"0"},{"key":"LocalAuthListEnabled","readonly":false,"value":"true"},{"key":"LocalAuthListMaxLength","readonly":false,"value":"50"},{"key":"SendLocalListMaxLength","readonly":false,"value":"50"},{"key":"ReserveConnectorZeroSupported","readonly":false,"value":"false"},{"key":"ChargeProfileMaxStackLevel","readonly":false,"value":"5"},{"key":"ChargingScheduleAllowedChargingRateUnit","readonly":false,"value":"Current"},{"key":"ChargingScheduleMaxPeriods","readonly":false,"value":"5"},{"key":"ConnectorSwitch3to1PhaseSupported","readonly":false,"value":"false"},{"key":"AuthorizationKey","readonly":false,"value":"ABCDEFGHIJ123456"},{"key":"CertificateStoreMaxLength","readonly":false,"value":"8"},{"key":"CpoName","readonly":false,"value":"EN+"},{"key":"SecurityProfile","readonly":false,"value":"2"},{"key":"vendorId","readonly":false,"value":"EN+"},{"key":"chargePointSN","readonly":false,"value":""},{"key":"ChargingParametersEnabled","readonly":false,"value":"true"},{"key":"ConnectorPhaseRotation","readonly":false,"value":""},{"key":"StopTxnSampledData","readonly":false,"value":"Energy.Active.Import.Register"},{"key":"StopTxnSampledDataMaxLength","readonly":false,"value":"120"},{"key":"CertificateSignedMaxChainSize","readonly":false,"value":"5000"},{"key":"AdditionalRootCertificateCheck","readonly":false,"value":"false"}]}';
   }
 
   /**
