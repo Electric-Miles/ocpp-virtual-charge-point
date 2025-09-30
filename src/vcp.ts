@@ -304,6 +304,8 @@ export class VCP {
       return this.getKebaConfiguration();
     } else if (this.vendor === VendorConfig.VENDORS.GL_EVIQ) {
       return this.getGlEviqConfiguration();
+    } else if (this.vendor === VendorConfig.VENDORS.EN_PLUS) {
+      return this.getEnPlusConfiguration();
     }
 
     return '{"configurationKey": []}';
@@ -463,6 +465,29 @@ export class VCP {
     ) {
       // Return default configuration
       return VendorConfig.getGlEviqConfiguration();
+    }
+
+    const configArray = Object.keys(this.vendorConfig).map((key) => ({
+      key,
+      value: this.vendorConfig[key].value,
+      readonly: this.vendorConfig[key].readonly,
+    }));
+
+    return JSON.stringify({ configurationKey: configArray });
+  }
+
+  /**
+   * Get configuration for standard EN_PLUS model
+   * @returns JSON string with EN_PLUS configuration
+   */
+  public getEnPlusConfiguration(): string {
+    // If this is not a EN_PLUS vendor or configuration is not initialized
+    if (
+      this.vendor !== VendorConfig.VENDORS.EN_PLUS ||
+      Object.keys(this.vendorConfig).length === 0
+    ) {
+      // Return default configuration
+      return VendorConfig.getEnPlus22kWConfiguration();
     }
 
     const configArray = Object.keys(this.vendorConfig).map((key) => ({
