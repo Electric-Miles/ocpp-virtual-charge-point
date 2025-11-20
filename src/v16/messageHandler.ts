@@ -118,6 +118,17 @@ const callHandlers: { [key: string]: CallHandler } = {
   },
   ChangeAvailability: (vcp: VCP, call: OcppCall<any>) => {
     vcp.respond(callResult(call, { status: "Accepted" }));
+
+    const status = call.payload.type === "Inoperative" ? "Unavailable" : "Preparing";
+    for (const connector of vcp.connectorIDs) {
+      vcp.send(
+          callFactory("StatusNotification", {
+            connectorId: connector,
+            errorCode: "NoError",
+            status: status,
+          }),
+      );
+    }
   },
   DataTransfer: (vcp: VCP, call: OcppCall<any>) => {
     vcp.respond(callResult(call, { status: "Accepted" }));
