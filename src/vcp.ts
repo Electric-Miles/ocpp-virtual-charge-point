@@ -53,7 +53,7 @@ export class VCP {
     this.isTwinGun = this.vcpOptions.isTwinGun ?? false;
     this.connectorIDs =
       this.vcpOptions.connectorIds ?? this.initializeConnectorIDs();
-    this.status = "Available";
+    this.status = "Unavailable";
     this.model = this.vcpOptions.model ?? VendorConfig.MODELS.EVC01;
     this.power = this.vcpOptions.power ?? 7;
     this.vendor = getVendor(this.model);
@@ -140,13 +140,19 @@ export class VCP {
   }
 
   async sendAndWait(ocppCall: OcppCall<any>) {
-    if (this.isWaiting) {
-      // try again after 1 second
-      await sleep(1000);
-      await this.sendAndWait(ocppCall);
-    } else {
-      this.isWaiting = true;
-      this.send(ocppCall);
+    // Wait until any previous request has been answered
+    while (this.isWaiting) {
+      await sleep(50);
+    }
+
+    // Send current request and mark as waiting
+    this.isWaiting = true;
+    this.send(ocppCall);
+
+    // Block until a message is received and processed
+    // _onMessage will set this.isWaiting = false when any message arrives
+    while (this.isWaiting) {
+      await sleep(50);
     }
   }
 

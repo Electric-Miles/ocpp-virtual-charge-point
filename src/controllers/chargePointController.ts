@@ -316,12 +316,11 @@ async function startMultipleVcps(payload: StartVcpRequestSchema) {
     vcps.push(vcp);
 
     const task = (async () => {
-      await vcp.connect();
-      await bootVCP(vcp);
       // Start each VCP a second apart
       await sleep(i * 1000);
+      await vcp.connect();
+      await bootVCP(vcp);
     })();
-
     tasks.push(task);
   }
 

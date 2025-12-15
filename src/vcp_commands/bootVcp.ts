@@ -22,27 +22,15 @@ export async function bootVCP(vcp: VCP, sleepTime: number = 500) {
         `Attempting to send StatusNotification for connectorId: ${connectorId}`,
       );
       await sleep(sleepTime);
-      try {
-        await Promise.race([
-          vcp.sendAndWait({
-            messageId: uuid.v4(),
-            action: "StatusNotification",
-            payload: {
-              connectorId: connectorId,
-              errorCode: "NoError",
-              status: "Preparing",
-            },
-          }),
-          new Promise((_, reject) =>
-            setTimeout(() => reject(new Error("sendAndWait timeout")), 5000),
-          ),
-        ]);
-      } catch (error) {
-        console.error(
-          `Error or timeout sending StatusNotification for connectorId: ${connectorId}`,
-          error,
-        );
-      }
+      await vcp.sendAndWait({
+        messageId: uuid.v4(),
+        action: "StatusNotification",
+        payload: {
+          connectorId: connectorId,
+          errorCode: "NoError",
+          status: "Preparing",
+        },
+      });
     }
     console.log("VCP successfully loaded...");
 }
