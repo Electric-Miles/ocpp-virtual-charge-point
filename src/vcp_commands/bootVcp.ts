@@ -6,7 +6,7 @@ export async function bootVCP(vcp: VCP, sleepTime: number = 500) {
     console.log("loading VCP...");
     console.log("Connector IDs:", vcp.connectorIDs);
 
-    await sleep(500);
+    //await sleep(500);
     await vcp.sendAndWait({
       messageId: uuid.v4(),
       action: "BootNotification",
@@ -21,7 +21,7 @@ export async function bootVCP(vcp: VCP, sleepTime: number = 500) {
       console.log(
         `Attempting to send StatusNotification for connectorId: ${connectorId}`,
       );
-      await sleep(sleepTime);
+      //await sleep(sleepTime);
       await vcp.sendAndWait({
         messageId: uuid.v4(),
         action: "StatusNotification",

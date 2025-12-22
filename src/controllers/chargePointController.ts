@@ -258,11 +258,18 @@ export const getVcpStatus = async (
     return acc;
   }, {});
 
+  const lastCloseReasonCount = vcpList.reduce((acc: any, vcp: VCP) => {
+    if (!vcp.lastCloseReason) return acc;
+    acc[vcp.lastCloseReason] = (acc[vcp.lastCloseReason] || 0) + 1;
+    return acc;
+  }, {});
+
   response = {
     meta: { count: vcpList.length },
     statusCount,
     endpointCount,
     modelCount,
+    lastCloseReasonCount,
   };
 
   if (verbose) {
@@ -316,8 +323,7 @@ async function startMultipleVcps(payload: StartVcpRequestSchema) {
     vcps.push(vcp);
 
     const task = (async () => {
-      // Start each VCP a second apart
-      await sleep(i * 1000);
+      await sleep(i * 300);
       await vcp.connect();
       await bootVCP(vcp);
     })();

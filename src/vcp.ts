@@ -17,6 +17,7 @@ import {
 import { getFirmware, getVendor, sleep } from "./utils";
 import { transactionManager } from "./v16/transactionManager";
 import { VendorConfig } from "./vendorConfig";
+import {bootVCP} from "./vcp_commands/bootVcp";
 
 interface VCPOptions {
   ocppVersion: OcppVersion;
@@ -43,7 +44,9 @@ export class VCP {
   public model: string;
   public vendor: string;
   public version: string;
+  public lastCloseReason: string|null = null;
   public power: number;
+  private heartbeatInterval ?:NodeJS.Timeout | string | number | undefined;
   private vendorConfig: Record<string, any> = {};
 
   constructor(public vcpOptions: VCPOptions) {
@@ -105,12 +108,24 @@ export class VCP {
       this.ws.on("close", (code: number, reason: string) =>
         this._onClose(code, reason),
       );
+      this.ws.on("error", (error: Error) => {
+        logger.error(`WebSocket error: ${error.message}`);
+        this._onClose(1000, `WebSocket error: ${error.message}`);
+      });
     });
   }
 
   send(ocppCall: OcppCall<any>) {
     if (!this.ws) {
       throw new Error("Websocket not initialized. Call connect() first");
+    }
+    // Prevent sending when the socket isn't ready yet
+    if (this.ws.readyState !== WebSocket.OPEN) {
+      // Avoid triggering ws internal error by sending while CONNECTING/CLOSING
+      // Let caller decide retry policy; Heartbeat sender will skip automatically
+      throw new Error(
+        `WebSocket is not open: readyState ${this.ws.readyState} (expected OPEN)`,
+      );
     }
     ocppOutbox.enqueue(ocppCall);
     const jsonMessage = JSON.stringify([
@@ -142,7 +157,7 @@ export class VCP {
   async sendAndWait(ocppCall: OcppCall<any>) {
     // Wait until any previous request has been answered
     while (this.isWaiting) {
-      await sleep(50);
+      await new Promise(resolve => setImmediate(resolve));
     }
 
     // Send current request and mark as waiting
@@ -152,7 +167,7 @@ export class VCP {
     // Block until a message is received and processed
     // _onMessage will set this.isWaiting = false when any message arrives
     while (this.isWaiting) {
-      await sleep(50);
+      await new Promise(resolve => setImmediate(resolve));
     }
   }
 
@@ -186,8 +201,17 @@ export class VCP {
   }
 
   configureHeartbeat(interval: number) {
-    setInterval(() => {
-      this.send(call("Heartbeat"));
+    this.heartbeatInterval = setInterval(() => {
+      // Only send Heartbeat when WS is ready
+      if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
+        // Skip this tick if not open yet/anymore
+        return;
+      }
+      try {
+        this.send(call("Heartbeat"));
+      } catch (e) {
+        // Silently skip if cannot send due to transient state
+      }
     }, interval);
   }
 
@@ -261,8 +285,20 @@ export class VCP {
     if (this.isFinishing) {
       return;
     }
-    logger.info(`Connection closed. code=${code}, reason=${reason}`);
-    process.exit();
+    const reasonMessage = reason || "No reason provided";
+    // https://developer.mozilla.org/en-US/docs/Web/API/CloseEvent/code
+    // 1000 = Normal Closure
+    logger.info(`Connection closed. ${this.vcpOptions.chargePointId} code=${code}, reason=${reasonMessage}`);
+
+    // record reason (returned in Get Status) and try to reconnect
+    this.lastCloseReason = `${code}=${reasonMessage}`;
+
+    this.status = 'Offline';
+
+    if (this.heartbeatInterval) {
+      clearInterval(this.heartbeatInterval);
+      this.heartbeatInterval = undefined;
+    }
   }
 
   disconnect() {
