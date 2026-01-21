@@ -198,14 +198,13 @@
                     <label class="block mb-2 label">Error Code</label>
                     <select id="errorCode" class="w-full select" required>
                       <option value="NoError">NoError</option>
-                      <option value="InternalError">InternalError</option>
-                      <option value="EVCommunicationError">EVCommunicationError</option>
-                      <option value="PeakWait">PeakWait</option>
+                      <option value="OtherError">OtherError</option>
                       <option value="ConnectorLockFailure">ConnectorLockFailure</option>
+                      <option value="EVCommunicationError">EVCommunicationError</option>
                       <option value="GroundFailure">GroundFailure</option>
                       <option value="HighTemperature">HighTemperature</option>
+                      <option value="InternalError">InternalError</option>
                       <option value="LocalListConflict">LocalListConflict</option>
-                      <option value="OtherError">OtherError</option>
                       <option value="OverCurrentFailure">OverCurrentFailure</option>
                       <option value="PowerMeterFailure">PowerMeterFailure</option>
                       <option value="PowerSwitchFailure">PowerSwitchFailure</option>
@@ -215,6 +214,29 @@
                       <option value="OverVoltage">OverVoltage</option>
                       <option value="WeakSignal">WeakSignal</option>
                     </select>
+                  </div>
+
+                  <div>
+                    <label class="block mb-2 label">Vendor Error Code</label>
+                    <select id="vendorErrorCode" class="w-full select" >
+                      <option value=""></option>
+                      <option value="ProtectiveEarth">ProtectiveEarth</option>
+                      <option value="00000004">00000004</option>
+                      <option value="PeakWait">PeakWait</option>
+                    </select>
+                    <p class="mt-0.5 block text-sm text-base-content/60">
+                      Usually set when Error Code is OtherError
+                    </p>
+                  </div>
+
+                  <div>
+                    <label class="block mb-2 label">Info</label>
+                    <select id="info" class="w-full select" >
+                      <option value=""></option>
+                      <option value="Client is offline">Client is offline</option>
+                    </select>
+                    <p class="mt-0.5 block text-sm text-base-content/60">
+                    </p>
                   </div>
 
                   <button type="submit" class="btn btn-primary btn-block">Change Status</button>
@@ -398,6 +420,8 @@
               connectorId: Number(document.getElementById("connectorId").value),
               status: document.getElementById("status").value,
               errorCode: document.getElementById("errorCode").value,
+              vendorErrorCode: document.getElementById("vendorErrorCode").value,
+              info: document.getElementById("info").value,
             },
           });
         });

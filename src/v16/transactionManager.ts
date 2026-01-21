@@ -43,6 +43,8 @@ export class TransactionManager {
                   measurand: "Current.Import",
                   unit: "A"
                 },
+                // exposes bug in adapter that could not parse Celcius
+                //{value:"8.0",context:"Sample.Periodic",format:"Raw",measurand:"Temperature",unit:"Celcius"},
                 {
                   value: (this.getSoCValue(transactionId)).toString(),
                   context: "Sample.Periodic",

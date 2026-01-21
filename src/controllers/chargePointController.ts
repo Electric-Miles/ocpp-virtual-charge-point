@@ -127,13 +127,13 @@ export const changeVcpStatus = async (
 
   console.log("action:" + action);
 
-  vcp.send({
+  let requestJson = vcp.send({
     action,
     messageId: uuid(),
     payload,
   });
 
-  return reply.send({ status: "success", message: "Status updated" });
+  return reply.send({ status: "success", message: "Status updated", requestJson: requestJson });
 };
 
 export const sendCommand = async (
@@ -149,6 +149,8 @@ export const sendCommand = async (
   if (!vcp) {
     return reply.send({ status: "error", message: "VCP not found" });
   }
+
+  var requestJson = '';
 
   if (action == "Faulted Restart") {
 
@@ -210,6 +212,8 @@ export const sendCommand = async (
         timestamp: new Date(),
       },
     });
+
+    requestJson = "StopTransaction > Authorize > StartTransaction > StatusNotification";
   } else if (action == "StopTransaction") {
     // add last transaction id to payload
     payload.transactionId = transactionManager.getTransactionIdByVcp(vcp, payload.connectorId);
@@ -217,20 +221,20 @@ export const sendCommand = async (
       return reply.send({ status: "error", message: "Transaction not found" });
     }
     delete payload.connectorId;
-    vcp.send({
+    requestJson = vcp.send({
       action,
       messageId: uuid(),
       payload,
     });
   } else {
-    vcp.send({
+    requestJson = vcp.send({
       action,
       messageId: uuid(),
       payload,
     });
   }
 
-  return reply.send({ status: "success", message: action + " Command Sent" });
+  return reply.send({ status: "success", message: action + " Command Sent", requestJson: requestJson });
 };
 
 export const getVcpStatus = async (

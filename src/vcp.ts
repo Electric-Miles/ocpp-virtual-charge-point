@@ -152,6 +152,8 @@ export class VCP {
     }
 
     this.ws.send(jsonMessage);
+
+    return jsonMessage;
   }
 
   async sendAndWait(ocppCall: OcppCall<any>) {
