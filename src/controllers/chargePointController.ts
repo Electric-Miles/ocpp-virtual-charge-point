@@ -299,6 +299,7 @@ async function startMultipleVcps(payload: StartVcpRequestSchema) {
     count,
     startChance,
     testCharge,
+    sendBootStatus,
     duration,
     randomDelay,
     connectors,
@@ -329,7 +330,11 @@ async function startMultipleVcps(payload: StartVcpRequestSchema) {
     const task = (async () => {
       await sleep(i * 300);
       await vcp.connect();
-      await bootVCP(vcp);
+      if (sendBootStatus) {
+        await bootVCP(vcp);
+      } else {
+        vcp.status = "Preparing";
+      }
     })();
     tasks.push(task);
   }

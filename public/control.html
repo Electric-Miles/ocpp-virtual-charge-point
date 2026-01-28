@@ -98,6 +98,12 @@
                     </label>
                     <input type="checkbox" class="checkbox" id="testCharge" />
                   </div>
+                  <div class="flex items-center space-x-4">
+                    <label for="sendBootStatus" class="label">
+                      Send Boot and Status Notifications upon connecting
+                    </label>
+                    <input type="checkbox" class="checkbox" id="sendBootStatus" checked />
+                  </div>
 
                           <div class="auto-start-options">
                             <label class="block mb-2 label">Auto Start Charge Session Duration</label>
@@ -399,6 +405,7 @@
             endpoint,
             startChance: Number(document.getElementById("startChance").value),
             testCharge: document.getElementById("testCharge").checked,
+            sendBootStatus: document.getElementById("sendBootStatus").checked,
             duration: Number(document.getElementById("duration").value),
             randomDelay: document.getElementById("randomDelay").checked,
             connectors: document.getElementById("connectors").value,

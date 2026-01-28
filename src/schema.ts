@@ -8,6 +8,7 @@ export const StartVcpValidationSchema = {
     "startChance",
     "testCharge",
     "duration",
+    "sendBootStatus",
   ],
   properties: {
     endpoint: { type: "string" },
@@ -16,6 +17,7 @@ export const StartVcpValidationSchema = {
     count: { type: "integer" },
     startChance: { type: "number" },
     testCharge: { type: "boolean" },
+    sendBootStatus: { type: "boolean" },
     duration: { type: "number" },
     randomDelay: { type: "boolean" },
     connectors: { type: "number" },
@@ -29,6 +31,7 @@ export interface StartVcpRequestSchema {
   count?: number;
   startChance: number;
   testCharge: boolean;
+  sendBootStatus: boolean;
   duration: number;
   randomDelay: boolean;
   connectors: number;

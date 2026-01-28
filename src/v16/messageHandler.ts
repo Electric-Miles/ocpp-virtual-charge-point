@@ -112,6 +112,13 @@ const callHandlers: { [key: string]: CallHandler } = {
   TriggerMessage: (vcp: VCP, call: OcppCall<TriggerMessageReq>) => {
     if (call.payload.requestedMessage === "StatusNotification") {
       vcp.respond(callResult(call, { status: "Accepted" }));
+      vcp.send(
+        callFactory("StatusNotification", {
+          connectorId: call.payload.connectorId,
+          errorCode: "NoError",
+          status: vcp.status,
+        }),
+      );
     } else {
       vcp.respond(callResult(call, { status: "NotImplemented" }));
     }
