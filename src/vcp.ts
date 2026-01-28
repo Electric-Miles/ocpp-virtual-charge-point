@@ -203,6 +203,9 @@ export class VCP {
   }
 
   configureHeartbeat(interval: number) {
+    if (this.heartbeatInterval) {
+      clearInterval(this.heartbeatInterval);
+    }
     this.heartbeatInterval = setInterval(() => {
       // Only send Heartbeat when WS is ready
       if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {

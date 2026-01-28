@@ -333,7 +333,8 @@ async function startMultipleVcps(payload: StartVcpRequestSchema) {
       if (sendBootStatus) {
         await bootVCP(vcp);
       } else {
-        vcp.status = "Preparing";
+        vcp.status = "Available";
+        vcp.configureHeartbeat(300_000);
       }
     })();
     tasks.push(task);
