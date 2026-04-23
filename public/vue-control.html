@@ -46,10 +46,6 @@
             <p>Single VCP setup for local testing, demos, and UAT.</p>
           </div>
 
-          <div v-if="statusMessage.text" class="status-banner" :class="statusMessage.type">
-            {{ statusMessage.text }}
-          </div>
-
           <form class="field-grid" @submit.prevent="startVcp">
             <label class="field">
               <span>Environment</span>
@@ -183,6 +179,10 @@
           <div class="panel-heading">
             <h2>Charger</h2>
             <div>Serial Number: {{ chargerCard.chargePointId }}</div>
+          </div>
+
+          <div v-if="statusMessage.text" class="status-banner" :class="statusMessage.type">
+            {{ statusMessage.text }}
           </div>
 
           <div class="charger-ui" :class="statusClass">

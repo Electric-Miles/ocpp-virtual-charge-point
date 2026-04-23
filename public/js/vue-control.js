@@ -1,7 +1,7 @@
 const { createApp } = Vue;
 const CONFIG_STORAGE_KEY = "vcp_vue_control_config";
 const ACCESS_TOKEN_KEY = "vcp_access_token";
-const STATUS_POLL_INTERVAL_MS = 7000;
+const STATUS_POLL_INTERVAL_MS = 30000; // poll every 30s
 
 createApp({
   data() {
