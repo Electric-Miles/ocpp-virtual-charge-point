@@ -231,6 +231,7 @@ select {
 .action-row {
   display: flex;
   justify-content: flex-end;
+  gap: 12px;
 }
 
 .primary-button {
@@ -245,6 +246,22 @@ select {
 }
 
 .primary-button:disabled {
+  opacity: 0.7;
+  cursor: wait;
+}
+
+.secondary-button {
+  min-height: 46px;
+  padding: 0 18px;
+  border: 1px solid rgba(148, 94, 255, 0.3);
+  border-radius: 12px;
+  background: rgba(148, 94, 255, 0.08);
+  color: #5d34b9;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.secondary-button:disabled {
   opacity: 0.7;
   cursor: wait;
 }
@@ -358,6 +375,12 @@ select {
 
 .card-button:hover {
   transform: translateY(-1px);
+}
+
+.card-button:disabled {
+  opacity: 0.72;
+  cursor: wait;
+  transform: none;
 }
 
 .control-hint {

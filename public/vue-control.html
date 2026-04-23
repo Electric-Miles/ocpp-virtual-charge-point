@@ -156,8 +156,24 @@
             </div>
 
             <div class="field-full action-row">
-              <button type="submit" class="primary-button" :disabled="isStarting || isAuthLoading">
+              <button type="submit" class="primary-button" :disabled="isStarting || isStopping || isAuthLoading">
                 {{ isStarting ? "Starting..." : "Start VCP" }}
+              </button>
+              <button
+                type="button"
+                class="secondary-button"
+                :disabled="isStarting || isStopping || isAuthLoading"
+                @click="stopVcp"
+              >
+                {{ isStopping ? "Stopping..." : "Stop VCP" }}
+              </button>
+              <button
+                type="button"
+                class="secondary-button"
+                :disabled="isRefreshing || isAuthLoading"
+                @click="refreshStatus()"
+              >
+                {{ isRefreshing ? "Refreshing..." : "Refresh Status" }}
               </button>
             </div>
           </form>
@@ -186,6 +202,7 @@
                 type="button"
                 class="card-button"
                 :class="{ active: chargerCard.vehiclePluggedIn }"
+                :disabled="isChangingStatus || isAuthLoading"
                 @click="togglePlug"
               >
                 {{
@@ -246,8 +263,13 @@
                 </label>
               </div>
 
-              <button type="button" class="primary-button status-submit-button" @click="applyStatusOverride">
-                Change Status
+              <button
+                type="button"
+                class="primary-button status-submit-button"
+                :disabled="isChangingStatus || isAuthLoading"
+                @click="applyStatusOverride"
+              >
+                {{ isChangingStatus ? "Changing..." : "Change Status" }}
               </button>
             </div>
 
