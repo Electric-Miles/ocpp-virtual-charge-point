@@ -40,6 +40,10 @@ app
     app.get("/control", async (request, reply) => {
       return reply.sendFile("control.html");
     });
+
+    app.get("/vue-control", async (request, reply) => {
+      return reply.sendFile("vue-control.html");
+    });
   });
 
 app.get("/health", async (request, reply) => {

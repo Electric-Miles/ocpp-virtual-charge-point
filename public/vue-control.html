@@ -1,0 +1,309 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Virtual Charge Point</title>
+    <link rel="stylesheet" href="/css/app.css" />
+    <link rel="stylesheet" href="/css/vue-control.css" />
+    <link
+      rel="shortcut icon"
+      href="https://assets.test.electricmiles.io/favicon.ico"
+    />
+    <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+    <script src="/js/vue-control.js" defer></script>
+  </head>
+  <body>
+    <div id="app" v-cloak class="page-shell">
+      <header class="page-header">
+        <div>
+          <p class="eyebrow">Demo and UAT Control</p>
+          <h1>Virtual Charge Point</h1>
+          <p class="page-subtitle">
+            Vue CDN shell for the next single-VCP control experience.
+          </p>
+        </div>
+
+        <div class="header-meta">
+          <div class="meta-chip">
+            <span class="meta-label">Environment</span>
+            <strong>{{ selectedEnvironment.label }}</strong>
+          </div>
+          <div class="meta-chip">
+            <span class="meta-label">User</span>
+            <strong>{{ user.firstName }}</strong>
+          </div>
+          <button type="button" class="ghost-button" @click="handleLogout">
+            Log Out
+          </button>
+        </div>
+      </header>
+
+      <main class="page-layout">
+        <section class="panel config-panel">
+          <div class="panel-heading">
+            <h2>Config</h2>
+            <p>Single VCP setup for local testing, demos, and UAT.</p>
+          </div>
+
+          <div v-if="statusMessage.text" class="status-banner" :class="statusMessage.type">
+            {{ statusMessage.text }}
+          </div>
+
+          <form class="field-grid" @submit.prevent="startVcp">
+            <label class="field">
+              <span>Environment</span>
+              <select v-model="form.environmentKey">
+                <option
+                  v-for="option in environmentOptions"
+                  :key="option.key"
+                  :value="option.key"
+                >
+                  {{ option.label }}
+                </option>
+              </select>
+              <small class="field-help">Local Dev stays the default for v1.</small>
+            </label>
+
+            <label class="field field-full">
+              <span>Endpoint</span>
+              <input
+                v-model="form.endpoint"
+                type="text"
+                placeholder="ws://127.0.0.1:9000"
+              />
+              <small class="field-help">
+                The environment preset can prefill this, but it remains editable.
+              </small>
+            </label>
+
+            <label class="field">
+              <span>Charge Point ID</span>
+              <input
+                v-model="form.chargePointId"
+                type="text"
+                placeholder="VCP_DEMO_01"
+              />
+              <small class="field-help">
+                Single-VCP mode uses one exact simulator ID.
+              </small>
+            </label>
+
+            <label class="field">
+              <span>Model</span>
+              <select v-model="form.model">
+                <option v-for="model in models" :key="model" :value="model">
+                  {{ model }}
+                </option>
+              </select>
+            </label>
+
+            <label class="field">
+              <span>OCPP Version</span>
+              <select v-model="form.ocppVersion">
+                <option value="OCPP_1.6">OCPP_1.6</option>
+                <option value="OCPP_2.0.1">OCPP_2.0.1</option>
+              </select>
+            </label>
+
+            <label class="field">
+              <span>Connector Count</span>
+              <input v-model="form.connectors" type="number" min="1" />
+            </label>
+
+            <label class="field">
+              <span>Charger Power</span>
+              <input v-model="form.power" type="number" min="1" />
+            </label>
+
+            <label class="field toggle-field">
+              <span>Send Boot / Status</span>
+              <input v-model="form.sendBootStatus" type="checkbox" />
+            </label>
+
+            <label class="field toggle-field">
+              <span>Auto Test Charge</span>
+              <input v-model="form.testCharge" type="checkbox" />
+            </label>
+
+            <div class="field-group field-full" v-if="form.testCharge">
+              <div class="field-group-header">
+                <strong>Auto Test Charge Options</strong>
+                <p>Only used when auto test charge is enabled.</p>
+              </div>
+
+              <div class="field-grid nested-grid">
+                <label class="field">
+                  <span>Duration (mins)</span>
+                  <input v-model="form.duration" type="number" min="1" />
+                </label>
+
+                <label class="field">
+                  <span>Start Chance</span>
+                  <input
+                    v-model="form.startChance"
+                    type="number"
+                    min="0"
+                    max="100"
+                  />
+                </label>
+
+                <label class="field toggle-field field-full">
+                  <span>Random Delay</span>
+                  <input v-model="form.randomDelay" type="checkbox" />
+                </label>
+              </div>
+            </div>
+
+            <div class="field-full action-row">
+              <button type="submit" class="primary-button" :disabled="isStarting || isAuthLoading">
+                {{ isStarting ? "Starting..." : "Start VCP" }}
+              </button>
+            </div>
+          </form>
+        </section>
+
+        <section class="panel charger-panel">
+          <div class="panel-heading">
+            <h2>Charger</h2>
+            <div>Serial Number: {{ chargerCard.chargePointId }}</div>
+          </div>
+
+          <div class="charger-ui" :class="statusClass">
+            <div class="display-panel">
+              <p class="display-label">{{ chargerCard.online ? "Connected" : "Offline" }}</p>
+              <div class="status-line">
+                <span class="status-led" :class="statusClass"></span>
+                <span class="status-text">{{ displayStatusText }}</span>
+              </div>
+              <p class="status-subtext">Last action: {{ chargerCard.lastAction }}</p>
+              <p class="status-detail">Backend status: {{ chargerCard.status }}</p>
+            </div>
+
+            <div class="control-group">
+              <label>Physical Connection</label>
+              <button
+                type="button"
+                class="card-button"
+                :class="{ active: chargerCard.vehiclePluggedIn }"
+                @click="togglePlug"
+              >
+                {{
+                  chargerCard.vehiclePluggedIn
+                    ? "Unplug Vehicle"
+                    : "Plug In Vehicle"
+                }}
+              </button>
+            </div>
+
+            <div class="control-group">
+              <label>Send OCPP Status</label>
+              <select v-model="statusForm.status">
+                <option v-for="status in statusOptions" :key="status" :value="status">
+                  {{ status }}
+                </option>
+              </select>
+              <p class="control-hint">Select OCPP status and apply it with the button below.</p>
+            </div>
+
+            <div class="control-group advanced-status-group">
+              <div class="advanced-grid">
+                <label class="advanced-field">
+                  <span>Connector Id</span>
+                  <input
+                    v-model="statusForm.connectorId"
+                    type="number"
+                    min="1"
+                    :max="chargerCard.connectors"
+                  />
+                </label>
+
+                <label class="advanced-field">
+                  <span>Error Code</span>
+                  <select v-model="statusForm.errorCode">
+                    <option v-for="code in errorCodeOptions" :key="code" :value="code">
+                      {{ code }}
+                    </option>
+                  </select>
+                </label>
+
+                <label class="advanced-field advanced-field-full">
+                  <span>Vendor Error Code</span>
+                  <input
+                    v-model="statusForm.vendorErrorCode"
+                    type="text"
+                    placeholder="Optional vendor-specific error code"
+                  />
+                </label>
+
+                <label class="advanced-field advanced-field-full">
+                  <span>Info</span>
+                  <input
+                    v-model="statusForm.info"
+                    type="text"
+                    placeholder="Optional additional status detail"
+                  />
+                </label>
+              </div>
+
+              <button type="button" class="primary-button status-submit-button" @click="applyStatusOverride">
+                Change Status
+              </button>
+            </div>
+
+            <div class="control-group inline-meta">
+              <div>
+                <span class="meta-label">Model</span>
+                <strong>{{ chargerCard.model }}</strong>
+              </div>
+              <div>
+                <span class="meta-label">OCPP</span>
+                <strong>{{ chargerCard.ocppVersion }}</strong>
+              </div>
+              <div>
+                <span class="meta-label">Connectors</span>
+                <strong>{{ chargerCard.connectors }}</strong>
+              </div>
+            </div>
+          </div>
+
+          <div class="supporting-meta">
+            <div class="supporting-item">
+              <span class="meta-label">Endpoint</span>
+              <strong>{{ chargerCard.endpoint }}</strong>
+            </div>
+            <div class="supporting-item">
+              <span class="meta-label">Vendor</span>
+              <strong>{{ chargerCard.vendor }}</strong>
+            </div>
+            <div class="supporting-item">
+              <span class="meta-label">Firmware</span>
+              <strong>{{ chargerCard.version }}</strong>
+            </div>
+            <div class="supporting-item">
+              <span class="meta-label">Last Close Reason</span>
+              <strong>{{ chargerCard.lastCloseReason }}</strong>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      <section class="panel logs-panel">
+        <div class="panel-heading">
+          <h2>Logs</h2>
+          <p>Placeholder frontend log panel for the CDN shell phase.</p>
+        </div>
+
+        <div class="logs-list">
+          <article v-for="entry in logs" :key="entry.id" class="log-entry">
+            <div class="log-row">
+              <strong>{{ entry.title }}</strong>
+              <span>{{ entry.time }}</span>
+            </div>
+            <p>{{ entry.message }}</p>
+          </article>
+        </div>
+      </section>
+    </div>
+  </body>
+</html>
