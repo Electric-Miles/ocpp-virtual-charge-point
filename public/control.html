@@ -57,103 +57,106 @@
                     <span class="mt-0.5 block text-sm text-base-content/60">If charger count > 1 then this is id prefix</span>
                   </div>
 
-                  <div>
-                    <label class="block mb-2 label">
-                      Charger Count
-                    </label>
-                    <input type="number" class="w-full input" id="count" min="1" value="1" />
-                  </div>
+                  <details class="space-y-4">
+                    <summary class="cursor-pointer text-sm text-base-content/60 hover:text-base-content select-none">Advanced options</summary>
 
-                  <div>
-                    <label class="block mb-2 label">Connector Count</label>
-                    <input type="number" id="connectors" class="w-full input" min="1" value="1" />
-                  </div>
+                    <div class="space-y-4 mt-4">
+                      <div>
+                        <label class="block mb-2 label">
+                          Charger Count
+                        </label>
+                        <input type="number" class="w-full input" id="count" min="1" value="1" />
+                      </div>
 
-                  <div>
-                    <label class="block mb-2 label">Charger Power kWh</label>
-                    <input type="number" id="power" class="w-full input" min="0" value="7" />
-                  </div>
+                      <div>
+                        <label class="block mb-2 label">Connector Count</label>
+                        <input type="number" id="connectors" class="w-full input" min="1" value="1" />
+                      </div>
 
-                  <div>
-                    <label class="block mb-2 label">Model</label>
-                    <select id="model" class="w-full select" required>
-                      <option value="EVC01">Vestel EVC01</option>
-                      <option value="EVA-07S-SE">ATESS EVA-07S-SE</option>
-                      <option value="EVC03">Vestel EVC03 DC</option>
-                      <option value="KC-P30">keba KC-P30</option>
-                      <option value="GL-EVIQ07WRS">GL-EVIQ07WRS</option>
-                      <option value="AC022K-BE-24">EN+ AC022K-BE-24</option>
-                    </select>
-                  </div>
+                      <div>
+                        <label class="block mb-2 label">Charger Power kWh</label>
+                        <input type="number" id="power" class="w-full input" min="0" value="7" />
+                      </div>
 
-                  <div>
-                    <label class="block mb-2 label">OCPP Version</label>
-                    <select id="ocppVersion" class="w-full select" required>
-                      <option value="OCPP_1.6">OCPP_1.6</option>
-                      <option value="OCPP_2.0.1">OCPP_2.0.1</option>
-                    </select>
-                  </div>
+                      <div>
+                        <label class="block mb-2 label">Model</label>
+                        <select id="model" class="w-full select" required>
+                          <option value="EVC01">Vestel EVC01</option>
+                          <option value="EVA-07S-SE">ATESS EVA-07S-SE</option>
+                          <option value="EVC03">Vestel EVC03 DC</option>
+                          <option value="KC-P30">keba KC-P30</option>
+                          <option value="GL-EVIQ07WRS">GL-EVIQ07WRS</option>
+                          <option value="AC022K-BE-24">EN+ AC022K-BE-24</option>
+                        </select>
+                      </div>
 
-                  <div class="flex items-center space-x-4">
-                    <label for="sendBootStatus" class="label">
-                      Send Boot and Status Notifications upon connecting
-                    </label>
-                    <input type="checkbox" class="checkbox" id="sendBootStatus" checked />
-                  </div>
+                      <div>
+                        <label class="block mb-2 label">OCPP Version</label>
+                        <select id="ocppVersion" class="w-full select" required>
+                          <option value="OCPP_1.6">OCPP_1.6</option>
+                          <option value="OCPP_2.0.1">OCPP_2.0.1</option>
+                        </select>
+                      </div>
 
-                  <div class="flex items-center space-x-4">
-                    <label for="sendMeterValues" class="label">
-                      Send Meter Values
-                    </label>
-                    <input type="checkbox" class="checkbox" id="sendMeterValues" checked />
-                  </div>
+                      <div class="flex items-center space-x-4">
+                        <label for="sendBootStatus" class="label">
+                          Send Boot and Status Notifications upon connecting
+                        </label>
+                        <input type="checkbox" class="checkbox" id="sendBootStatus" checked />
+                      </div>
 
-                  <div class="flex items-center space-x-4">
-                    <label for="mixedMeterValues" class="label">
-                      Send Mixed Meter Values (some without energy value - ie Easee chargers)
-                    </label>
-                    <input type="checkbox" class="checkbox" id="mixedMeterValues" />
-                  </div>
+                      <div class="flex items-center space-x-4">
+                        <label for="sendMeterValues" class="label">
+                          Send Meter Values
+                        </label>
+                        <input type="checkbox" class="checkbox" id="sendMeterValues" checked />
+                      </div>
 
-                  <div class="flex items-center space-x-4">
-                    <label for="continueMeterValueFromPreviousTransaction" class="label">
-                      Continue meter value from previous tranasction (or start each transaction with meter value at 0)
-                    </label>
-                    <input type="checkbox" class="checkbox" id="continueMeterValueFromPreviousTransaction" checked />
-                  </div>
+                      <div class="flex items-center space-x-4">
+                        <label for="mixedMeterValues" class="label">
+                          Send Mixed Meter Values (some without energy value - ie Easee chargers)
+                        </label>
+                        <input type="checkbox" class="checkbox" id="mixedMeterValues" />
+                      </div>
 
-                  <div class="flex items-center space-x-4">
-                    <label for="testCharge" class="label">
-                      Auto Start Charge Session
-                    </label>
-                    <input type="checkbox" class="checkbox" id="testCharge" />
-                  </div>
+                      <div class="flex items-center space-x-4">
+                        <label for="continueMeterValueFromPreviousTransaction" class="label">
+                          Continue meter value from previous tranasction (or start each transaction with meter value at 0)
+                        </label>
+                        <input type="checkbox" class="checkbox" id="continueMeterValueFromPreviousTransaction" checked />
+                      </div>
 
-                          <div class="auto-start-options">
-                            <label class="block mb-2 label">Auto Start Charge Session Duration</label>
-                            <input type="number" id="duration" class="w-full input" value="5" min="1" required />
-                            <span class="mt-0.5 block text-sm text-base-content/60">Used when auto charging - this is the duration of the session (minutes) </span>
-                          </div>
+                      <div class="flex items-center space-x-4">
+                        <label for="testCharge" class="label">
+                          Auto Start Charge Session
+                        </label>
+                        <input type="checkbox" class="checkbox" id="testCharge" />
+                      </div>
 
-                          <div class="auto-start-options">
-                            <label class="block mb-2 label">
-                              Auto Start Charge Session % Chance <span class="optional">(optional)</span>
-                            </label>
-                            <input type="number" id="startChance" class="w-full input" placeholder="100" min="1" />
-                          </div>
+                      <div class="auto-start-options">
+                        <label class="block mb-2 label">Auto Start Charge Session Duration</label>
+                        <input type="number" id="duration" class="w-full input" value="5" min="1" required />
+                        <span class="mt-0.5 block text-sm text-base-content/60">Used when auto charging - this is the duration of the session (minutes) </span>
+                      </div>
 
-                          <div class="auto-start-options">
-                            <div class="flex items-center space-x-4">
-                              <label for="randomDelay" class="label">
-                                Enable Random Delay
-                              </label>
-                              <input type="checkbox" id="randomDelay" class="checkbox" />
-                            </div>
-                          </div>
+                      <div class="auto-start-options">
+                        <label class="block mb-2 label">
+                          Auto Start Charge Session % Chance <span class="optional">(optional)</span>
+                        </label>
+                        <input type="number" id="startChance" class="w-full input" placeholder="100" min="1" />
+                      </div>
 
-                  <br>
+                      <div class="auto-start-options">
+                        <div class="flex items-center space-x-4">
+                          <label for="randomDelay" class="label">
+                            Enable Random Delay
+                          </label>
+                          <input type="checkbox" id="randomDelay" class="checkbox" />
+                        </div>
+                      </div>
+                    </div>
+                  </details>
 
-            
                   <button type="submit" class="btn btn-primary btn-block">Start VCP</button>
                 </form>
               </div>
