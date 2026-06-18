@@ -29,6 +29,9 @@ interface VCPOptions {
   connectorIds?: number[];
   model: string;
   power: number;
+  sendMeterValues?: boolean;
+  mixedMeterValues?: boolean;
+  continueMeterValueFromPreviousTransaction?: boolean;
 }
 
 export class VCP {
@@ -48,6 +51,9 @@ export class VCP {
   public power: number;
   private heartbeatInterval ?:NodeJS.Timeout | string | number | undefined;
   private vendorConfig: Record<string, any> = {};
+  public mixedMeterValues: boolean = false;
+  public sendMeterValues: boolean = true;
+  public continueMeterValueFromPreviousTransaction: boolean = true;
 
   constructor(public vcpOptions: VCPOptions) {
     this.messageHandler = resolveMessageHandler(vcpOptions.ocppVersion);
@@ -61,6 +67,9 @@ export class VCP {
     this.power = this.vcpOptions.power ?? 7;
     this.vendor = getVendor(this.model);
     this.version = getFirmware(this.model);
+    this.sendMeterValues = vcpOptions.sendMeterValues ?? true;
+    this.mixedMeterValues = vcpOptions.mixedMeterValues ?? false;
+    this.continueMeterValueFromPreviousTransaction = vcpOptions.continueMeterValueFromPreviousTransaction ?? true;
 
     if (vcpOptions.adminWsPort) {
       this.adminWs = new WebSocketServer({

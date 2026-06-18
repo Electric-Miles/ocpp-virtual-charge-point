@@ -24,12 +24,58 @@ export class TransactionManager {
     transactionId: number,
     connectorId: number
   ) {
-    const meterValuesTimer = setInterval(() => {
-      vcp.send(
-        call("MeterValues", {
-          connectorId: connectorId,
-          transactionId: transactionId,
-          meterValue: [
+    let meterValuesTimer;
+    if (vcp.sendMeterValues) {
+      meterValuesTimer = setInterval(() => {
+        let sampledValue = [];
+        if (vcp.mixedMeterValues) {
+          // sometimes send meter values without energy - ie Easee chargers
+          if (Math.random() < 0.3) {
+            // no energy value
+            sampledValue = [
+              {
+                timestamp: new Date(),
+                sampledValue: [
+                  {
+                    value: "28.67",
+                    measurand: "Current.Import",
+                    unit: "A"
+                  },
+                  {
+                    value: (this.getSoCValue(transactionId)).toString(),
+                    context: "Sample.Periodic",
+                    measurand: "SoC",
+                    unit: "Percent"
+                  },
+                  {
+                    measurand: "Voltage",
+                    unit: "V",
+                    phase: "L1",
+                    value: "247",
+                    context: "Sample.Periodic",
+                    location: "Outlet"
+                  }
+                ],
+              },
+            ];
+          } else {
+            // just meter value
+            sampledValue = [
+              {
+                timestamp: new Date(),
+                sampledValue: [
+                  {
+                    value: (this.getMeterValue(transactionId)).toString(),
+                    measurand: "Energy.Active.Import.Register",
+                    unit: "Wh"
+                  },
+                ],
+              },
+            ];
+          }
+        } else {
+          // send normal full meter value
+          sampledValue = [
             {
               timestamp: new Date(),
               sampledValue: [
@@ -61,10 +107,17 @@ export class TransactionManager {
                 }
               ],
             },
-          ],
-        })
-      );
-    }, METER_VALUES_INTERVAL_SEC * 1000);
+          ];
+        }
+        vcp.send(
+            call("MeterValues", {
+              connectorId: connectorId,
+              transactionId: transactionId,
+              meterValue: sampledValue,
+            })
+        );
+      }, METER_VALUES_INTERVAL_SEC * 1000);
+    }
     // console.log(parseInt(process.env["INITIAL_METER_READINGS"] ?? '0'));
     this.transactions.set(transactionId.toString(), {
       transactionId: transactionId,
@@ -142,6 +195,10 @@ export class TransactionManager {
   }
 
   getStartTransactionStartMeterValue(vcp: VCP, connectorId: number = 1): number {
+    // store vcp.metervalue as the current meter value
+    if (!vcp.continueMeterValueFromPreviousTransaction) {
+      return 0;
+    }
     // use previous transaction meter value if exists
     const transactionId = this.getTransactionIdByVcp(vcp, connectorId);
     if (transactionId) {

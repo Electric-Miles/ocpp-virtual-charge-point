@@ -306,6 +306,9 @@ async function startMultipleVcps(payload: StartVcpRequestSchema) {
     power,
     ocppVersion,
     model,
+    sendMeterValues,
+    mixedMeterValues,
+    continueMeterValueFromPreviousTransaction,
   } = payload;
 
   const vcps: VCP[] = [];
@@ -323,6 +326,9 @@ async function startMultipleVcps(payload: StartVcpRequestSchema) {
       connectorIds,
       model,
       power,
+      sendMeterValues,
+      mixedMeterValues,
+      continueMeterValueFromPreviousTransaction,
     });
 
     vcps.push(vcp);

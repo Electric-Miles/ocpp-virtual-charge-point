@@ -38,6 +38,9 @@ export interface StartVcpRequestSchema {
   power: number;
   ocppVersion: OcppVersion;
   model: string;
+  sendMeterValues: boolean;
+  mixedMeterValues: boolean;
+  continueMeterValueFromPreviousTransaction: boolean;
 }
 
 export enum StatusNotification {
