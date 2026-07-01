@@ -6,6 +6,7 @@ import { sleep } from "../utils";
 import { v4 as uuid } from "uuid";
 import {
   ChangeVcpStatusRequestSchema,
+  ConnectorStatusRequestSchema,
   StartVcpRequestSchema,
   StatusRequestSchema,
   StopVcpRequestSchema,
@@ -235,6 +236,31 @@ export const sendCommand = async (
   }
 
   return reply.send({ status: "success", message: action + " Command Sent", requestJson: requestJson });
+};
+
+export const getConnectorStatus = async (
+  request: FastifyRequest<{ Querystring: ConnectorStatusRequestSchema }>,
+  reply: FastifyReply,
+) => {
+  const { chargePointId, connectorId } = request.query;
+
+  const vcp = vcpList.find(
+    (v: VCP) => v.vcpOptions.chargePointId === chargePointId,
+  );
+
+  if (!vcp) {
+    return reply.send({ status: "error", message: "VCP not found" });
+  }
+
+  return reply.send({
+    status: "success",
+    data: {
+      chargePointId: vcp.vcpOptions.chargePointId,
+      connectorId: connectorId ?? 1,
+      connectorStatus: vcp.status,
+      lastAction: vcp.lastAction,
+    },
+  });
 };
 
 export const getVcpStatus = async (

@@ -3,6 +3,7 @@ import {
     startVcp,
     stopVcp,
     getVcpStatus,
+    getConnectorStatus,
     changeVcpStatus, sendCommand,
 } from "../controllers/chargePointController";
 import {
@@ -10,6 +11,7 @@ import {
   StopVcpValidationSchema,
   StatusValidationSchema,
   ChangeVcpStatusValidationSchema,
+  ConnectorStatusValidationSchema,
 } from "../schema";
 
 export async function chargePointRoutes(app: FastifyInstance) {
@@ -50,6 +52,14 @@ export async function chargePointRoutes(app: FastifyInstance) {
       preHandler: app.auth([app.verifyJwt]),
     },
     changeVcpStatus,
+  );
+  app.get(
+    "connector-status",
+    {
+      schema: { querystring: ConnectorStatusValidationSchema },
+      preHandler: app.auth([app.verifyJwt]),
+    },
+    getConnectorStatus,
   );
     app.post(
         "send-command",

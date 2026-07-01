@@ -104,6 +104,20 @@ export interface StatusRequestSchema {
   verbose: boolean;
 }
 
+export const ConnectorStatusValidationSchema = {
+  type: "object",
+  required: ["chargePointId"],
+  properties: {
+    chargePointId: { type: "string" },
+    connectorId: { type: "integer" },
+  },
+};
+
+export interface ConnectorStatusRequestSchema {
+  chargePointId: string;
+  connectorId?: number;
+}
+
 export const LoginValidationSchema = {
   type: "object",
   required: ["email", "password"],

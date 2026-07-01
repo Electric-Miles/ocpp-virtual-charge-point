@@ -269,6 +269,15 @@
                   </div>
 
                   <button type="submit" class="btn btn-primary btn-block">Change Status</button>
+
+                  <div class="flex items-center gap-3 flex-wrap">
+
+                    <div id="connectorStatusInline" class="hidden flex-1 flex items-center gap-2">
+                      <span id="connectorStatusBadge" class="badge"></span>
+                    </div>
+                    <button type="button" id="getConnectorStatusBtn" class="btn btn-sm btn-secondary">Get Status</button>
+                    <button type="button" id="connectorActionBtn" class="hidden btn btn-sm btn-outline"></button>
+                  </div>
                 </form>
               </div>
 
@@ -489,6 +498,64 @@
         const verbose = document.getElementById("verbose").checked
 
         sendRequest(`/api/vcp/status?verbose=${verbose}`, "GET");
+      });
+
+      // Connector status polling
+      let connectorStatusInterval = null;
+
+      function statusBadgeClass(status) {
+        return { Available: "badge-success", Charging: "badge-info", Preparing: "badge-warning",
+                 Faulted: "badge-error", Finishing: "badge-warning", SuspendedEV: "badge-warning",
+                 SuspendedEVSE: "badge-warning", Unavailable: "badge-neutral", Offline: "badge-neutral" }[status] || "badge-neutral";
+      }
+
+      async function fetchConnectorStatus() {
+        const chargePointId = document.getElementById("statusChargePointId").value;
+        const connectorId = document.getElementById("connectorId").value;
+        if (!chargePointId) return;
+
+        const res = await fetch(
+          `/api/vcp/connector-status?chargePointId=${encodeURIComponent(chargePointId)}&connectorId=${connectorId}`,
+          { headers: { "Content-Type": "application/json", Authorization: `Bearer ${localStorage.getItem("vcp_access_token")}` } }
+        );
+        const data = await res.json();
+        if (data.status !== "success") return;
+
+        const { connectorStatus, lastAction } = data.data;
+        const badge = document.getElementById("connectorStatusBadge");
+        badge.textContent = connectorStatus;
+        badge.className = "badge " + statusBadgeClass(connectorStatus);
+        document.getElementById("connectorStatusInline").classList.remove("hidden");
+
+        const actionBtn = document.getElementById("connectorActionBtn");
+        actionBtn.classList.remove("hidden");
+        if (connectorStatus === "Available") {
+          actionBtn.textContent = "Plug In";
+          actionBtn.dataset.targetStatus = "Preparing";
+        } else {
+          actionBtn.textContent = "Unplug";
+          actionBtn.dataset.targetStatus = "Available";
+        }
+      }
+
+      document.getElementById("getConnectorStatusBtn").addEventListener("click", function () {
+        if (connectorStatusInterval) {
+          clearInterval(connectorStatusInterval);
+          connectorStatusInterval = null;
+          this.textContent = "Get Status";
+          this.classList.replace("btn-error", "btn-secondary");
+        } else {
+          fetchConnectorStatus();
+          connectorStatusInterval = setInterval(fetchConnectorStatus, 3000);
+          this.textContent = "Stop Refreshing";
+          this.classList.replace("btn-secondary", "btn-error");
+        }
+      });
+
+      document.getElementById("connectorActionBtn").addEventListener("click", function () {
+        document.getElementById("status").value = this.dataset.targetStatus;
+        document.getElementById("errorCode").value = "NoError";
+        document.getElementById("changeStatusForm").dispatchEvent(new Event("submit"));
       });
 
       document.getElementById("logout").addEventListener("click", (event) => {
