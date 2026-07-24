@@ -9,6 +9,11 @@ import { delay, NOOP } from "../utils";
 import { VCP } from "../vcp";
 import { transactionManager } from "./transactionManager";
 import {
+  buildCompositeSchedule,
+  clearChargingProfiles,
+  upsertChargingProfile,
+} from "./chargingProfiles";
+import {
   GetConfigurationReq,
   RemoteStartTransactionReq,
   RemoteStopTransactionReq,
@@ -38,11 +43,51 @@ const callHandlers: { [key: string]: CallHandler } = {
     await delay(3000);
     vcp.close();
   },
-  SetChargingProfile: (vcp: VCP, call: OcppCall) => {
-    vcp.respond(callResult(call, { status: "Accepted" }));
+  SetChargingProfile: (vcp: VCP, call: OcppCall<any>) => {
+    const { connectorId, csChargingProfiles } = call.payload;
+    const status = upsertChargingProfile(vcp, connectorId, csChargingProfiles);
+    
+    vcp.respond(callResult(call, { status }));
+
+    // Reflect the new limit (and suspend/resume) immediately rather than waiting
+    // for the next periodic MeterValues tick. A ChargePointMaxProfile arrives on
+    // connector 0 and affects every connector, so re-evaluate all of them.
+    transactionManager.sendMeterValuesNow(vcp, connectorId);
   },
-  ClearChargingProfile: (vcp: VCP, call: OcppCall) => {
-    vcp.respond(callResult(call, { status: "Accepted" }));
+  ClearChargingProfile: (vcp: VCP, call: OcppCall<any>) => {
+    const removed = clearChargingProfiles(vcp, call.payload ?? {});
+    
+    vcp.respond(callResult(call, { status: removed ? "Accepted" : "Unknown" }));
+    
+    transactionManager.sendMeterValuesNow(vcp, call.payload?.connectorId ?? 0);
+  },
+  GetCompositeSchedule: (vcp: VCP, call: OcppCall<any>) => {
+    const { connectorId, duration } = call.payload;
+    const unit = call.payload.chargingRateUnit ?? "A";
+    const transactionId = transactionManager.getTransactionIdByVcp(
+      vcp,
+      connectorId,
+    );
+    const transaction = transactionId
+      ? transactionManager.transactions.get(transactionId.toString())
+      : undefined;
+    const now = new Date();
+    const chargingSchedule = buildCompositeSchedule(
+      vcp,
+      connectorId,
+      duration,
+      unit,
+      { now, transactionId, transactionStartedAt: transaction?.startedAt },
+    );
+
+    vcp.respond(
+      callResult(call, {
+        status: "Accepted",
+        connectorId,
+        scheduleStart: now.toISOString(),
+        chargingSchedule,
+      }),
+    );
   },
   RemoteStartTransaction: (
     vcp: VCP,

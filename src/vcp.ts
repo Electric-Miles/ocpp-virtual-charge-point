@@ -18,6 +18,13 @@ import { getFirmware, getVendor, sleep } from "./utils";
 import { transactionManager } from "./v16/transactionManager";
 import { VendorConfig } from "./vendorConfig";
 import {bootVCP} from "./vcp_commands/bootVcp";
+import {
+  CsChargingProfile,
+  EffectiveLimit,
+  resolveEffectiveLimit,
+  StoredProfile,
+  upsertChargingProfile,
+} from "./v16/chargingProfiles";
 
 interface VCPOptions {
   ocppVersion: OcppVersion;
@@ -29,6 +36,7 @@ interface VCPOptions {
   connectorIds?: number[];
   model: string;
   power: number;
+  numberOfPhases?: number; // 1 or 3; defaults based on power
   sendMeterValues?: boolean;
   mixedMeterValues?: boolean;
   continueMeterValueFromPreviousTransaction?: boolean;
@@ -49,6 +57,8 @@ export class VCP {
   public version: string;
   public lastCloseReason: string|null = null;
   public power: number;
+  public numberOfPhases: number;
+  public chargingProfiles: StoredProfile[] = [];
   private heartbeatInterval ?:NodeJS.Timeout | string | number | undefined;
   private vendorConfig: Record<string, any> = {};
   public mixedMeterValues: boolean = false;
@@ -65,6 +75,8 @@ export class VCP {
     this.status = "Unavailable";
     this.model = this.vcpOptions.model ?? VendorConfig.MODELS.EVC01;
     this.power = this.vcpOptions.power ?? 7;
+    this.numberOfPhases =
+      this.vcpOptions.numberOfPhases ?? (this.power > 7.4 ? 3 : 1);
     this.vendor = getVendor(this.model);
     this.version = getFirmware(this.model);
     this.sendMeterValues = vcpOptions.sendMeterValues ?? true;
@@ -610,5 +622,39 @@ export class VCP {
     }
 
     return parseInt(configuredValue);
+  }
+
+  /**
+   * Apply a charging profile locally (as if received via SetChargingProfile) and
+   * return the resulting effective limit. Used by the manual DLM injector so a
+   * limit can be exercised without a live CSMS. Triggers an immediate MeterValues
+   * sample so compliance is observable without waiting for the periodic timer.
+   */
+  public applyChargingProfile(
+    connectorId: number,
+    csProfile: CsChargingProfile,
+  ): { status: "Accepted" | "Rejected"; effective: EffectiveLimit } {
+    const status = upsertChargingProfile(this, connectorId, csProfile);
+
+    const transactionId = transactionManager.getTransactionIdByVcp(
+      this,
+      connectorId,
+    );
+    const transaction = transactionId
+      ? transactionManager.transactions.get(transactionId.toString())
+      : undefined;
+
+    const effective = resolveEffectiveLimit(this, connectorId, new Date(), {
+      transactionId,
+      transactionStartedAt: transaction?.startedAt,
+    });
+
+    // Push an immediate MeterValues sample. sendMeterValuesNow no-ops when there
+    // is no active transaction and, for connector 0 (ChargePointMaxProfile),
+    // re-evaluates every connector — so this must not be gated on a connector-0
+    // transaction existing.
+    transactionManager.sendMeterValuesNow(this, connectorId);
+
+    return { status, effective };
   }
 }

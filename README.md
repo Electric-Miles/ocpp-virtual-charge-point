@@ -2,6 +2,8 @@
 
 Simple, configurable, terminal-based OCPP Charging Station simulator written in Node.js with JSON Schema validation.
 
+> **Dynamic Load Management (DLM):** the VCP can apply `SetChargingProfile` limits (reflected in per-phase `MeterValues`) and emulate a load-balancer device (e.g. Charge-M8 Libra) to test DLM end to end. See [docs/DLM.md](docs/DLM.md).
+
 ## Prerequisites
 
 - Node.js 12+

@@ -7,13 +7,54 @@ import { v4 as uuid } from "uuid";
 import {
   ChangeVcpStatusRequestSchema,
   ConnectorStatusRequestSchema,
+  SetChargingProfileRequestSchema,
+  StartDlmRequestSchema,
   StartVcpRequestSchema,
   StatusRequestSchema,
+  StopDlmRequestSchema,
   StopVcpRequestSchema,
+  UpdateDlmRequestSchema,
 } from "../schema";
 import { transactionManager } from "../v16/transactionManager";
+import {
+  clearChargingProfiles,
+  ProfilePurpose,
+  resolveEffectiveLimit,
+} from "../v16/chargingProfiles";
+import { DlmDevice } from "../dlm/dlmDevice";
+import { listDlmDeviceTypes, resolveDlmDeviceType } from "../dlm/registry";
 
 let vcpList: VCP[] = [];
+let dlmDevices: DlmDevice[] = [];
+
+/**
+ * Total live charger load (watts) across all running VCPs in this process, using
+ * the effective DLM limit where one applies (else the charger's rated power).
+ * Injected into DlmDevice so the emulated site-meter feed reflects EV demand.
+ */
+function totalChargerLoadWatts(): number {
+  let total = 0;
+  for (const vcp of vcpList) {
+    for (const connectorId of vcp.connectorIDs) {
+      if (connectorId === 0) continue;
+      const transactionId = transactionManager.getTransactionIdByVcp(
+        vcp,
+        connectorId,
+      );
+      if (!transactionId) continue;
+      const transaction = transactionManager.transactions.get(
+        transactionId.toString(),
+      );
+      if (!transaction || !transaction.active) continue;
+      const eff = resolveEffectiveLimit(vcp, connectorId, new Date(), {
+        transactionId,
+        transactionStartedAt: transaction.startedAt,
+      });
+      total += eff.unlimited ? vcp.power * 1000 : eff.limitWatts;
+    }
+  }
+  return total;
+}
 
 export const startVcp = async (
   request: FastifyRequest<{ Body: StartVcpRequestSchema }>,
@@ -252,14 +293,99 @@ export const getConnectorStatus = async (
     return reply.send({ status: "error", message: "VCP not found" });
   }
 
+  const cid = connectorId ?? 1;
+  const transactionId = transactionManager.getTransactionIdByVcp(vcp, cid);
+  const transaction = transactionId
+    ? transactionManager.transactions.get(transactionId.toString())
+    : undefined;
+  const eff = resolveEffectiveLimit(vcp, cid, new Date(), {
+    transactionId,
+    transactionStartedAt: transaction?.startedAt,
+  });
+
   return reply.send({
     status: "success",
     data: {
       chargePointId: vcp.vcpOptions.chargePointId,
-      connectorId: connectorId ?? 1,
+      connectorId: cid,
       connectorStatus: vcp.status,
       lastAction: vcp.lastAction,
+      appliedLimitAmps: eff.unlimited ? null : Number(eff.limitAmps.toFixed(2)),
+      appliedLimitWatts: eff.unlimited ? null : Math.round(eff.limitWatts),
+      numberPhases: eff.numberPhases,
+      limitSource: eff.source ?? null,
+      activeProfileCount: vcp.chargingProfiles.length,
     },
+  });
+};
+
+export const setChargingProfile = async (
+  request: FastifyRequest<{ Body: SetChargingProfileRequestSchema }>,
+  reply: FastifyReply,
+) => {
+  const {
+    chargePointId,
+    connectorId,
+    limit,
+    unit,
+    purpose,
+    stackLevel,
+    numberPhases,
+    duration,
+    clear,
+  } = request.body;
+
+  const vcp = vcpList.find(
+    (v: VCP) => v.vcpOptions.chargePointId === chargePointId,
+  );
+
+  if (!vcp) {
+    return reply.send({ status: "error", message: "VCP not found" });
+  }
+
+  const cid = connectorId ?? 1;
+
+  if (clear) {
+    const removed = clearChargingProfiles(vcp, {});
+    transactionManager.sendMeterValuesNow(vcp, 0);
+    return reply.send({
+      status: "success",
+      message: removed ? "Charging profiles cleared" : "No profiles to clear",
+    });
+  }
+
+  if (limit === undefined) {
+    return reply.send({ status: "error", message: "limit is required" });
+  }
+
+  const csChargingProfiles = {
+    chargingProfileId: Date.now() % 2147483647,
+    stackLevel: stackLevel ?? 0,
+    chargingProfilePurpose: (purpose ?? "TxProfile") as ProfilePurpose,
+    chargingProfileKind: "Absolute" as const,
+    chargingSchedule: {
+      chargingRateUnit: (unit ?? "A") as "A" | "W",
+      duration: duration ?? 86400,
+      startSchedule: new Date().toISOString(),
+      chargingSchedulePeriod: [
+        {
+          startPeriod: 0,
+          limit: limit,
+          numberPhases: numberPhases ?? vcp.numberOfPhases,
+        },
+      ],
+    },
+  };
+
+  const { status, effective } = vcp.applyChargingProfile(
+    cid,
+    csChargingProfiles,
+  );
+
+  return reply.send({
+    status: "success",
+    message: `Charging profile ${status}`,
+    data: { status, effective, csChargingProfiles },
   });
 };
 
@@ -330,6 +456,7 @@ async function startMultipleVcps(payload: StartVcpRequestSchema) {
     randomDelay,
     connectors,
     power,
+    numberOfPhases,
     ocppVersion,
     model,
     sendMeterValues,
@@ -352,6 +479,7 @@ async function startMultipleVcps(payload: StartVcpRequestSchema) {
       connectorIds,
       model,
       power,
+      numberOfPhases,
       sendMeterValues,
       mixedMeterValues,
       continueMeterValueFromPreviousTransaction,
@@ -411,3 +539,130 @@ function computeConnectIds(connectors: number) {
 
   return connectorIds;
 }
+
+export const getDlmDeviceTypes = async (
+  _request: FastifyRequest,
+  reply: FastifyReply,
+) => {
+  return reply.send({ status: "success", data: listDlmDeviceTypes() });
+};
+
+export const startDlmDevice = async (
+  request: FastifyRequest<{ Body: StartDlmRequestSchema }>,
+  reply: FastifyReply,
+) => {
+  const {
+    endpoint,
+    deviceTypeId,
+    deviceId,
+    baselineLoadWatts,
+    includeChargerLoad,
+    voltagePerPhase,
+    phases,
+  } = request.body;
+
+  if (dlmDevices.find((d) => d.options.deviceId === deviceId)) {
+    return reply.send({
+      status: "error",
+      message: `DLM device ${deviceId} already started`,
+    });
+  }
+
+  try {
+    resolveDlmDeviceType(deviceTypeId);
+  } catch (e) {
+    return reply.send({
+      status: "error",
+      message: `Unknown DLM device type: ${deviceTypeId}`,
+    });
+  }
+
+  const device = new DlmDevice({
+    endpoint,
+    deviceTypeId,
+    deviceId,
+    baselineLoadWatts: baselineLoadWatts ?? 0,
+    includeChargerLoad: includeChargerLoad ?? true,
+    voltagePerPhase,
+    phases,
+    loadProvider: totalChargerLoadWatts,
+  });
+
+  dlmDevices.push(device);
+
+  try {
+    await device.connect();
+  } catch (e) {
+    dlmDevices = dlmDevices.filter((d) => d !== device);
+    return reply.send({
+      status: "error",
+      message: `Failed to connect DLM device: ${(e as Error).message}`,
+    });
+  }
+
+  return reply.send({
+    status: "success",
+    message: `DLM device ${deviceId} started`,
+  });
+};
+
+export const updateDlmDevice = async (
+  request: FastifyRequest<{ Body: UpdateDlmRequestSchema }>,
+  reply: FastifyReply,
+) => {
+  const { deviceId, baselineLoadWatts } = request.body;
+
+  const device = dlmDevices.find((d) => d.options.deviceId === deviceId);
+  if (!device) {
+    return reply.send({ status: "error", message: "DLM device not found" });
+  }
+
+  if (baselineLoadWatts !== undefined) {
+    device.updateBaseline(baselineLoadWatts);
+  }
+
+  return reply.send({
+    status: "success",
+    message: "DLM device updated",
+    data: device.getStatus(),
+  });
+};
+
+export const stopDlmDevice = async (
+  request: FastifyRequest<{ Body: StopDlmRequestSchema }>,
+  reply: FastifyReply,
+) => {
+  const { deviceId } = request.body;
+
+  if (!deviceId) {
+    dlmDevices.forEach((d) => d.stop());
+    dlmDevices = [];
+    return reply.send({ status: "success", message: "All DLM devices stopped" });
+  }
+
+  const device = dlmDevices.find((d) => d.options.deviceId === deviceId);
+  if (!device) {
+    return reply.send({ status: "error", message: "DLM device not found" });
+  }
+
+  device.stop();
+  dlmDevices = dlmDevices.filter((d) => d !== device);
+
+  return reply.send({
+    status: "success",
+    message: `DLM device ${deviceId} stopped`,
+  });
+};
+
+export const getDlmStatus = async (
+  _request: FastifyRequest,
+  reply: FastifyReply,
+) => {
+  return reply.send({
+    status: "success",
+    data: {
+      types: listDlmDeviceTypes(),
+      devices: dlmDevices.map((d) => d.getStatus()),
+    },
+  });
+};
