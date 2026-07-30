@@ -21,6 +21,7 @@ export const StartVcpValidationSchema = {
     duration: { type: "number" },
     randomDelay: { type: "boolean" },
     connectors: { type: "number" },
+    numberOfPhases: { type: "number" },
     ocppVersion: { type: "string" },
   },
 };
@@ -36,6 +37,7 @@ export interface StartVcpRequestSchema {
   randomDelay: boolean;
   connectors: number;
   power: number;
+  numberOfPhases?: number;
   ocppVersion: OcppVersion;
   model: string;
   sendMeterValues: boolean;
@@ -116,6 +118,83 @@ export const ConnectorStatusValidationSchema = {
 export interface ConnectorStatusRequestSchema {
   chargePointId: string;
   connectorId?: number;
+}
+
+export const SetChargingProfileValidationSchema = {
+  type: "object",
+  required: ["chargePointId"],
+  properties: {
+    chargePointId: { type: "string" },
+    connectorId: { type: "integer" },
+    limit: { type: "number" },
+    unit: { type: "string" },
+    purpose: { type: "string" },
+    stackLevel: { type: "integer" },
+    numberPhases: { type: "integer" },
+    duration: { type: "integer" },
+    clear: { type: "boolean" },
+  },
+};
+
+export interface SetChargingProfileRequestSchema {
+  chargePointId: string;
+  connectorId?: number;
+  limit?: number;
+  unit?: "A" | "W";
+  purpose?: string;
+  stackLevel?: number;
+  numberPhases?: number;
+  duration?: number;
+  clear?: boolean;
+}
+
+export const StartDlmValidationSchema = {
+  type: "object",
+  required: ["endpoint", "deviceTypeId", "deviceId"],
+  properties: {
+    endpoint: { type: "string" },
+    deviceTypeId: { type: "string" },
+    deviceId: { type: "string" },
+    baselineLoadWatts: { type: "number" },
+    includeChargerLoad: { type: "boolean" },
+    voltagePerPhase: { type: "number" },
+    phases: { type: "number" },
+  },
+};
+
+export interface StartDlmRequestSchema {
+  endpoint: string;
+  deviceTypeId: string;
+  deviceId: string;
+  baselineLoadWatts?: number;
+  includeChargerLoad?: boolean;
+  voltagePerPhase?: number;
+  phases?: number;
+}
+
+export const UpdateDlmValidationSchema = {
+  type: "object",
+  required: ["deviceId"],
+  properties: {
+    deviceId: { type: "string" },
+    baselineLoadWatts: { type: "number" },
+  },
+};
+
+export interface UpdateDlmRequestSchema {
+  deviceId: string;
+  baselineLoadWatts?: number;
+}
+
+export const StopDlmValidationSchema = {
+  type: "object",
+  properties: {
+    deviceId: { type: "string" },
+  },
+};
+
+export interface StopDlmRequestSchema {
+  deviceId?: string;
 }
 
 export const LoginValidationSchema = {

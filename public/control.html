@@ -79,6 +79,15 @@
                       </div>
 
                       <div>
+                        <label class="block mb-2 label">Phases</label>
+                        <select id="numberOfPhases" class="w-full select">
+                          <option value="1">Single-phase (L1)</option>
+                          <option value="3">Three-phase (L1/L2/L3)</option>
+                        </select>
+                        <span class="mt-0.5 block text-sm text-base-content/60">How DLM current limits are reported in MeterValues</span>
+                      </div>
+
+                      <div>
                         <label class="block mb-2 label">Model</label>
                         <select id="model" class="w-full select" required>
                           <option value="EVC01">Vestel EVC01</option>
@@ -274,6 +283,7 @@
 
                     <div id="connectorStatusInline" class="hidden flex-1 flex items-center gap-2">
                       <span id="connectorStatusBadge" class="badge"></span>
+                      <span id="connectorLimitBadge" class="badge badge-outline"></span>
                     </div>
                     <button type="button" id="getConnectorStatusBtn" class="btn btn-sm btn-secondary">Get Status</button>
                     <button type="button" id="connectorActionBtn" class="hidden btn btn-sm btn-outline"></button>
@@ -318,6 +328,140 @@
                   </div>
 
                   <button type="submit" class="btn btn-primary btn-block">Send Command</button>
+                </form>
+              </div>
+
+              <!-- Charging Profile (DLM) tab -->
+              <input type="radio" name="my_tabs_2" class="tab" aria-label="Charging Profile" />
+
+              <div id="chargingProfile" class="tab-content bg-base-100 border-base-300 p-5">
+                <form id="chargingProfileForm" class="space-y-4">
+                  <p class="text-sm text-base-content/60">
+                    Apply a charging profile to this VCP (as if received via SetChargingProfile) to test DLM current limiting. The limit is reflected in the VCP's MeterValues.
+                  </p>
+
+                  <div>
+                    <label class="block mb-2 label">Charge Point ID</label>
+                    <input type="text" id="cpChargePointId" class="w-full input" placeholder="VCP_ALAN_01" required />
+                  </div>
+
+                  <div>
+                    <label class="block mb-2 label">Connector Id</label>
+                    <input type="number" id="cpConnectorId" class="w-full input" value="1" min="0" required />
+                    <span class="mt-0.5 block text-sm text-base-content/60">Use 0 for ChargePointMaxProfile (whole station)</span>
+                  </div>
+
+                  <div>
+                    <label class="block mb-2 label">Purpose</label>
+                    <select id="cpPurpose" class="w-full select">
+                      <option value="TxProfile">TxProfile</option>
+                      <option value="TxDefaultProfile">TxDefaultProfile</option>
+                      <option value="ChargePointMaxProfile">ChargePointMaxProfile</option>
+                    </select>
+                  </div>
+
+                  <div class="flex gap-4">
+                    <div class="flex-1">
+                      <label class="block mb-2 label">Limit</label>
+                      <input type="number" id="cpLimit" class="w-full input" value="16" min="0" step="0.1" required />
+                    </div>
+                    <div class="w-32">
+                      <label class="block mb-2 label">Unit</label>
+                      <select id="cpUnit" class="w-full select">
+                        <option value="A">A</option>
+                        <option value="W">W</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div class="flex gap-4">
+                    <div class="flex-1">
+                      <label class="block mb-2 label">Stack Level</label>
+                      <input type="number" id="cpStackLevel" class="w-full input" value="0" min="0" />
+                    </div>
+                    <div class="flex-1">
+                      <label class="block mb-2 label">Number of Phases</label>
+                      <select id="cpNumberPhases" class="w-full select">
+                        <option value="">(charger default)</option>
+                        <option value="1">1</option>
+                        <option value="3">3</option>
+                      </select>
+                    </div>
+                    <div class="flex-1">
+                      <label class="block mb-2 label">Duration (s)</label>
+                      <input type="number" id="cpDuration" class="w-full input" value="86400" min="1" />
+                    </div>
+                  </div>
+
+                  <div class="flex gap-3">
+                    <button type="submit" class="btn btn-primary flex-1">Send Charging Profile</button>
+                    <button type="button" id="clearProfilesBtn" class="btn btn-outline">Clear Profiles</button>
+                  </div>
+                </form>
+              </div>
+
+              <!-- DLM Device tab -->
+              <input type="radio" name="my_tabs_2" class="tab" aria-label="DLM Device" />
+
+              <div id="dlmDevice" class="tab-content bg-base-100 border-base-300 p-5">
+                <form id="dlmDeviceForm" class="space-y-4">
+                  <p class="text-sm text-base-content/60">
+                    Emulate a Dynamic Load Management device that streams site-meter readings to the OCPP platform (every ~5s), so the platform's DLM calculation runs and sends TxProfiles to the chargers.
+                  </p>
+
+                  <div>
+                    <label class="block mb-2 label">Endpoint</label>
+                    <select id="dlmEndpoint" class="w-full select" required>
+                      <option value="wss://ocpp.test.electricmiles.io">Test</option>
+                      <option value="wss://ocpp.stage1.electricmiles.io">Stage 1</option>
+                      <option value="wss://ocpp.stage2.electricmiles.io">Stage 2</option>
+                      <option value="wss://ocpp.stage3.electricmiles.io">Stage 3</option>
+                      <option value="wss://ocpp.stage4.electricmiles.io">Stage 4</option>
+                      <option value="wss://ocpp.electricmiles.io">Production</option>
+                      <option value="ws://127.0.0.1:9000">Local Dev</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label class="block mb-2 label">DLM Device Type</label>
+                    <select id="dlmDeviceType" class="w-full select" required></select>
+                  </div>
+
+                  <div>
+                    <label class="block mb-2 label">Device ID</label>
+                    <input type="text" id="dlmDeviceId" class="w-full input" placeholder="DLB0001" required />
+                  </div>
+
+                  <div class="flex gap-4">
+                    <div class="flex-1">
+                      <label class="block mb-2 label">Baseline Site Load (kW)</label>
+                      <input type="number" id="dlmBaselineKw" class="w-full input" value="10" min="0" step="0.1" />
+                      <span class="mt-0.5 block text-sm text-base-content/60">Raise this to shrink available capacity and drive the DLM</span>
+                    </div>
+                    <div class="w-32">
+                      <label class="block mb-2 label">Phases</label>
+                      <select id="dlmPhases" class="w-full select">
+                        <option value="3">3</option>
+                        <option value="1">1</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div class="flex items-center space-x-4">
+                    <label for="dlmIncludeChargerLoad" class="label">Include live charger load in the reading</label>
+                    <input type="checkbox" class="checkbox" id="dlmIncludeChargerLoad" checked />
+                  </div>
+
+                  <div class="flex gap-3">
+                    <button type="submit" class="btn btn-primary flex-1">Start DLM Device</button>
+                    <button type="button" id="dlmUpdateBtn" class="btn btn-secondary">Apply Load</button>
+                    <button type="button" id="dlmStopBtn" class="btn btn-outline">Stop</button>
+                  </div>
+
+                  <div>
+                    <button type="button" id="dlmRefreshBtn" class="btn btn-sm btn-ghost">Refresh status</button>
+                    <pre id="dlmStatus" class="mt-2 text-xs"></pre>
+                  </div>
                 </form>
               </div>
 
@@ -390,8 +534,11 @@
               document.getElementById("vcpId").value = chargePointId;
               document.getElementById("chargePointId").value = chargePointId;
               document.getElementById("cmdChargePointId").value = chargePointId;
+              document.getElementById("cpChargePointId").value = chargePointId;
               if (endpoint) {
                 document.getElementById("endpoint").value = endpoint;
+                const dlmEp = document.getElementById("dlmEndpoint");
+                if (dlmEp) dlmEp.value = endpoint;
               }
             }
           })
@@ -455,6 +602,7 @@
             randomDelay: document.getElementById("randomDelay").checked,
             connectors: document.getElementById("connectors").value,
             power: document.getElementById("power").value,
+            numberOfPhases: Number(document.getElementById("numberOfPhases").value),
             ocppVersion: document.getElementById("ocppVersion").value,
             model: document.getElementById("model").value,
             sendMeterValues: document.getElementById("sendMeterValues").checked,
@@ -521,11 +669,21 @@
         const data = await res.json();
         if (data.status !== "success") return;
 
-        const { connectorStatus, lastAction } = data.data;
+        const { connectorStatus, lastAction, appliedLimitAmps, limitSource } = data.data;
         const badge = document.getElementById("connectorStatusBadge");
         badge.textContent = connectorStatus;
         badge.className = "badge " + statusBadgeClass(connectorStatus);
         document.getElementById("connectorStatusInline").classList.remove("hidden");
+
+        const limitBadge = document.getElementById("connectorLimitBadge");
+        if (appliedLimitAmps === null || appliedLimitAmps === undefined) {
+          limitBadge.textContent = "No limit";
+          limitBadge.className = "badge badge-outline";
+        } else {
+          const src = limitSource ? ` · ${limitSource.purpose} #${limitSource.chargingProfileId}` : "";
+          limitBadge.textContent = `Limit: ${appliedLimitAmps} A${src}`;
+          limitBadge.className = "badge badge-warning";
+        }
 
         const actionBtn = document.getElementById("connectorActionBtn");
         actionBtn.classList.remove("hidden");
@@ -631,6 +789,119 @@
                   payload: payload,
                 });
               });
+
+      document
+        .getElementById("chargingProfileForm")
+        .addEventListener("submit", function (event) {
+          event.preventDefault();
+
+          const numberPhasesVal = document.getElementById("cpNumberPhases").value;
+
+          sendRequest("/api/vcp/set-charging-profile", "POST", {
+            chargePointId: document.getElementById("cpChargePointId").value,
+            connectorId: Number(document.getElementById("cpConnectorId").value),
+            purpose: document.getElementById("cpPurpose").value,
+            limit: Number(document.getElementById("cpLimit").value),
+            unit: document.getElementById("cpUnit").value,
+            stackLevel: Number(document.getElementById("cpStackLevel").value),
+            numberPhases: numberPhasesVal ? Number(numberPhasesVal) : undefined,
+            duration: Number(document.getElementById("cpDuration").value),
+          });
+        });
+
+      document
+        .getElementById("clearProfilesBtn")
+        .addEventListener("click", function () {
+          sendRequest("/api/vcp/set-charging-profile", "POST", {
+            chargePointId: document.getElementById("cpChargePointId").value,
+            connectorId: Number(document.getElementById("cpConnectorId").value),
+            clear: true,
+          });
+        });
+
+      // --- DLM Device emulation ---
+      async function loadDlmDeviceTypes() {
+        try {
+          const res = await fetch("/api/vcp/dlm/types", {
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${localStorage.getItem("vcp_access_token")}`,
+            },
+          });
+          const data = await res.json();
+          if (data.status === "success") {
+            const sel = document.getElementById("dlmDeviceType");
+            sel.innerHTML = "";
+            data.data.forEach((t) => {
+              const opt = document.createElement("option");
+              opt.value = t.id;
+              opt.textContent = t.label;
+              sel.appendChild(opt);
+            });
+          }
+        } catch (e) {
+          console.error(e);
+        }
+      }
+
+      async function fetchDlmStatus() {
+        try {
+          const res = await fetch("/api/vcp/dlm/status", {
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${localStorage.getItem("vcp_access_token")}`,
+            },
+          });
+          const data = await res.json();
+          document.getElementById("dlmStatus").textContent = JSON.stringify(
+            data.data?.devices ?? [],
+            null,
+            2,
+          );
+        } catch (e) {
+          console.error(e);
+        }
+      }
+
+      document
+        .getElementById("dlmDeviceForm")
+        .addEventListener("submit", function (event) {
+          event.preventDefault();
+          sendRequest("/api/vcp/dlm/start", "POST", {
+            endpoint: document.getElementById("dlmEndpoint").value,
+            deviceTypeId: document.getElementById("dlmDeviceType").value,
+            deviceId: document.getElementById("dlmDeviceId").value,
+            baselineLoadWatts:
+              Number(document.getElementById("dlmBaselineKw").value) * 1000,
+            includeChargerLoad: document.getElementById("dlmIncludeChargerLoad")
+              .checked,
+            phases: Number(document.getElementById("dlmPhases").value),
+          });
+        });
+
+      document
+        .getElementById("dlmUpdateBtn")
+        .addEventListener("click", function () {
+          sendRequest("/api/vcp/dlm/update", "POST", {
+            deviceId: document.getElementById("dlmDeviceId").value,
+            baselineLoadWatts:
+              Number(document.getElementById("dlmBaselineKw").value) * 1000,
+          });
+        });
+
+      document
+        .getElementById("dlmStopBtn")
+        .addEventListener("click", function () {
+          sendRequest("/api/vcp/dlm/stop", "POST", {
+            deviceId: document.getElementById("dlmDeviceId").value,
+          });
+        });
+
+      document
+        .getElementById("dlmRefreshBtn")
+        .addEventListener("click", fetchDlmStatus);
+
+      loadDlmDeviceTypes();
 
 
 
