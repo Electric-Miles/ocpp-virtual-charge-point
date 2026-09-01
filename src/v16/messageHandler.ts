@@ -25,8 +25,13 @@ const callHandlers: { [key: string]: CallHandler } = {
     vcp.respond(callResult(call, { status: "Accepted" }));
   },
   ChangeConfiguration: (vcp: VCP, call: OcppCall<any>) => {
+    if (call.payload.key === "AuthorizationKey" || call.payload.key === "SecurityProfile") {
+      vcp.respond(callResult(call, { status: "NotSupported" }));
+      return;
+    }
+
     const success = vcp.updateVendorConfiguration(call.payload.key, call.payload.value);
-    
+
     if (success) {
       vcp.respond(callResult(call, { status: "Accepted" }));
     } else {

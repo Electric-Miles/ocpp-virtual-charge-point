@@ -13,6 +13,11 @@ import {RequestStartTransactionReq, TransactionEventReq} from "./types";
 
 const callHandlers: { [key: string]: CallHandler } = {
   ChangeConfiguration: (vcp: VCP, call: OcppCall<any>) => {
+    if (call.payload.key === "AuthorizationKey") {
+      vcp.respond(callResult(call, {status: "NotSupported"}));
+      return;
+    }
+
     vcp.respond(callResult(call, {status: "Accepted"}));
   },
   GetConfiguration: (vcp: VCP, call: OcppCall<any>) => {
