@@ -407,13 +407,13 @@
                 </form>
               </div>
 
-              <!-- DLM Device tab -->
-              <input type="radio" name="my_tabs_2" class="tab" aria-label="DLM Device" />
+              <!-- DLB Device tab -->
+              <input type="radio" name="my_tabs_2" class="tab" aria-label="DLB Device" />
 
               <div id="dlmDevice" class="tab-content bg-base-100 border-base-300 p-5">
                 <form id="dlmDeviceForm" class="space-y-4">
                   <p class="text-sm text-base-content/60">
-                    Emulate a Dynamic Load Management device that streams site-meter readings to the OCPP platform (every ~5s), so the platform's DLM calculation runs and sends TxProfiles to the chargers.
+                    Emulate a Dynamic Load Balancer (DLB) device that streams site-meter readings to the OCPP platform (every ~5s), so the platform's DLM calculation runs and sends TxProfiles to the chargers.
                   </p>
 
                   <div>
@@ -430,7 +430,12 @@
                   </div>
 
                   <div>
-                    <label class="block mb-2 label">DLM Device Type</label>
+                    <label class="block mb-2 label">DLB Brand</label>
+                    <select id="dlbBrand" class="w-full select" required></select>
+                  </div>
+
+                  <div>
+                    <label class="block mb-2 label">DLB Model</label>
                     <select id="dlmDeviceType" class="w-full select" required></select>
                   </div>
 
@@ -460,13 +465,13 @@
                   </div>
 
                   <div class="flex gap-3">
-                    <button type="submit" class="btn btn-primary flex-1">Start DLM Device</button>
+                    <button type="submit" class="btn btn-primary flex-1">Start DLB Device</button>
                     <button type="button" id="dlmUpdateBtn" class="btn btn-secondary">Apply Load</button>
                     <button type="button" id="dlmStopBtn" class="btn btn-outline">Stop</button>
                   </div>
 
                   <div>
-                    <button type="button" id="dlmRefreshBtn" class="btn btn-sm btn-ghost">Refresh status</button>
+                    <button type="button" id="dlmRefreshBtn" class="btn btn-secondary">Refresh status</button>
                     <pre id="dlmStatus" class="mt-2 text-xs"></pre>
                   </div>
                 </form>
@@ -827,7 +832,24 @@
           });
         });
 
-      // --- DLM Device emulation ---
+      // --- DLB Device emulation ---
+      let dlbDeviceTypes = [];
+
+      // Populate the DLB Model dropdown with the models of the selected brand.
+      function renderDlbModels() {
+        const brand = document.getElementById("dlbBrand").value;
+        const sel = document.getElementById("dlmDeviceType");
+        sel.innerHTML = "";
+        dlbDeviceTypes
+          .filter((t) => t.brand === brand)
+          .forEach((t) => {
+            const opt = document.createElement("option");
+            opt.value = t.id;
+            opt.textContent = t.label;
+            sel.appendChild(opt);
+          });
+      }
+
       async function loadDlmDeviceTypes() {
         try {
           const res = await fetch("/api/vcp/dlm/types", {
@@ -838,19 +860,27 @@
           });
           const data = await res.json();
           if (data.status === "success") {
-            const sel = document.getElementById("dlmDeviceType");
-            sel.innerHTML = "";
-            data.data.forEach((t) => {
+            dlbDeviceTypes = data.data;
+
+            const brandSel = document.getElementById("dlbBrand");
+            brandSel.innerHTML = "";
+            [...new Set(dlbDeviceTypes.map((t) => t.brand))].forEach((brand) => {
               const opt = document.createElement("option");
-              opt.value = t.id;
-              opt.textContent = t.label;
-              sel.appendChild(opt);
+              opt.value = brand;
+              opt.textContent = brand;
+              brandSel.appendChild(opt);
             });
+
+            renderDlbModels();
           }
         } catch (e) {
           console.error(e);
         }
       }
+
+      document
+        .getElementById("dlbBrand")
+        .addEventListener("change", renderDlbModels);
 
       async function fetchDlmStatus() {
         try {

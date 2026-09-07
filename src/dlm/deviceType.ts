@@ -22,6 +22,9 @@ export interface DlmReading {
  */
 export interface DlmDeviceType {
   id: string;
+  /** Manufacturer, used to group models in the UI (e.g. "Charge-M8"). */
+  brand: string;
+  /** Model name shown in the UI (e.g. "Charge-M8-Libra-DLB"). */
   label: string;
   defaultReportIntervalMs: number;
   /** Build the OCPP call that carries a reading to the CSMS (vendor-specific). */

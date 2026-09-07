@@ -15,6 +15,14 @@ export function resolveDlmDeviceType(id: string): DlmDeviceType {
   return type;
 }
 
-export function listDlmDeviceTypes(): { id: string; label: string }[] {
-  return Object.values(registry).map((t) => ({ id: t.id, label: t.label }));
+export function listDlmDeviceTypes(): {
+  id: string;
+  brand: string;
+  label: string;
+}[] {
+  return Object.values(registry).map((t) => ({
+    id: t.id,
+    brand: t.brand,
+    label: t.label,
+  }));
 }

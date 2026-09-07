@@ -8,8 +8,9 @@ const SCALE = 1000;
 const scale = (n: number) => Math.round(n * SCALE);
 
 export const chargeM8Libra: DlmDeviceType = {
-  id: "charge-m8-libra",
-  label: "Charge-M8 Libra",
+  id: "Charge-M8-Libra-DLB",
+  brand: "Charge-M8",
+  label: "Charge-M8-Libra-DLB",
   defaultReportIntervalMs: 5000,
   buildReadingCall(reading: DlmReading) {
     const data = {

@@ -27,7 +27,7 @@ The VCP reproduces both the charger side (steps 3–4) and, optionally, the devi
    - Let your CSMS/DLM send a real `SetChargingProfile`, **or**
    - Use the **Charging Profile** tab to inject one manually (below).
 5. Watch compliance in the **Change Status** tab: enter the Charge Point ID + connector, click **Get Status**, and the badge shows the applied limit (e.g. `Limit: 16.0 A · TxProfile #501`). The charger's outgoing `MeterValues` carry the limited `Current.Import`.
-6. To test the full loop, use the **DLM Device** tab to start an emulated Libra and drive the platform (below).
+6. To test the full loop, use the **DLB Device** tab to start an emulated Libra and drive the platform (below).
 
 ---
 
@@ -71,7 +71,7 @@ Limits are clamped to the charger's rating (`power` kW at ~245 V per phase). A 7
 The VCP can connect to the CSMS as a DLM/load-balancer device and stream site-meter readings, so the platform's DLM calculation runs and it sends `TxProfile`s to the chargers.
 
 ### From the control UI
-**DLM Device** tab → pick **Endpoint**, **DLM Device Type** (e.g. *Charge-M8 Libra*), **Device ID** (e.g. `DLB0001`), **Baseline Site Load (kW)**, **Phases**, and whether to **include live charger load** in the reading → **Start DLM Device**. Then:
+**DLB Device** tab → pick **Endpoint**, **DLB Brand** (e.g. *Charge-M8*), **DLB Model** (e.g. *Charge-M8-Libra-DLB*), **Device ID** (e.g. `DLB0001`), **Baseline Site Load (kW)**, **Phases**, and whether to **include live charger load** in the reading → **Start DLB Device**. Then:
 - **Apply Load** pushes an updated baseline live — *this is the main test lever*: raise it to shrink available capacity → the platform sends lower `TxProfile`s → the chargers throttle (visible in their MeterValues/badge) → their reported load drops → the platform recalculates.
 - **Stop** disconnects the device; **Refresh status** shows the last reading sent.
 
@@ -81,7 +81,7 @@ The VCP can connect to the CSMS as a DLM/load-balancer device and stream site-me
 # including live charger draw in the reading
 curl -s -X POST http://localhost:3000/api/vcp/dlm/start \
   -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
-  -d '{"endpoint":"wss://ocpp.test.electricmiles.io","deviceTypeId":"charge-m8-libra","deviceId":"DLB0001","baselineLoadWatts":10000,"includeChargerLoad":true,"phases":3}'
+  -d '{"endpoint":"wss://ocpp.test.electricmiles.io","deviceTypeId":"Charge-M8-Libra-DLB","deviceId":"DLB0001","baselineLoadWatts":10000,"includeChargerLoad":true,"phases":3}'
 
 # Drive the DLM: raise the reported baseline to 40 kW
 curl -s -X POST http://localhost:3000/api/vcp/dlm/update \
@@ -124,7 +124,7 @@ The reported site load = `baselineLoadWatts` + (live charger load, if enabled), 
 
 DLM devices are pluggable. To add a vendor:
 
-1. Implement `DlmDeviceType` (see [`src/dlm/deviceType.ts`](../src/dlm/deviceType.ts)) — `id`, `label`, `defaultReportIntervalMs`, and `buildReadingCall(reading)` which turns a `DlmReading` (volts/amps/watts/Wh) into that vendor's OCPP frame and scaling. Model it on [`src/dlm/chargeM8Libra.ts`](../src/dlm/chargeM8Libra.ts).
+1. Implement `DlmDeviceType` (see [`src/dlm/deviceType.ts`](../src/dlm/deviceType.ts)) — `id`, `brand` (groups models in the **DLB Brand** dropdown), `label` (the model name shown in **DLB Model**), `defaultReportIntervalMs`, and `buildReadingCall(reading)` which turns a `DlmReading` (volts/amps/watts/Wh) into that vendor's OCPP frame and scaling. Model it on [`src/dlm/chargeM8Libra.ts`](../src/dlm/chargeM8Libra.ts).
 2. Register it in [`src/dlm/registry.ts`](../src/dlm/registry.ts).
 
 That's all — the runtime, API, and the UI's device-type dropdown pick it up automatically.
