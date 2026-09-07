@@ -5,7 +5,7 @@ import {
   CallResultHandler,
   OcppMessageHandler,
 } from "../ocppMessageHandler";
-import { delay, NOOP } from "../utils";
+import {delay, NOOP, sleep} from "../utils";
 import { VCP } from "../vcp";
 import { transactionManager } from "./transactionManager";
 import {
@@ -135,6 +135,23 @@ const callHandlers: { [key: string]: CallHandler } = {
       return;
     }
     vcp.respond(callResult(call, { status: "Accepted" }));
+
+    if (!vcp.sendStopTransactionThenStatusNotification) {
+      vcp.send(
+          callFactory("StatusNotification", {
+            connectorId: transaction.connectorId,
+            errorCode: "NoError",
+            status: "Finishing",
+          }),
+      );
+      vcp.send(
+          callFactory("StatusNotification", {
+            connectorId: transaction.connectorId,
+            errorCode: "NoError",
+            status: "Available",
+          }),
+      );
+    }
     vcp.send(
       callFactory("StopTransaction", {
         transactionId: transactionId,
@@ -142,13 +159,16 @@ const callHandlers: { [key: string]: CallHandler } = {
         timestamp: new Date(),
       }),
     );
-    vcp.send(
-      callFactory("StatusNotification", {
-        connectorId: transaction.connectorId,
-        errorCode: "NoError",
-        status: "Finishing",
-      }),
-    );
+
+    if (!vcp.sendStopTransactionThenStatusNotification) {
+      vcp.send(
+          callFactory("StatusNotification", {
+            connectorId: transaction.connectorId,
+            errorCode: "NoError",
+            status: "Finishing",
+          }),
+      );
+    }
   },
   ReserveNow: (vcp: VCP, call: OcppCall<any>) => {
     vcp.respond(callResult(call, { status: "Accepted" }));

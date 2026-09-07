@@ -40,6 +40,7 @@ interface VCPOptions {
   sendMeterValues?: boolean;
   mixedMeterValues?: boolean;
   continueMeterValueFromPreviousTransaction?: boolean;
+  sendStopTransactionThenStatusNotification?: boolean;
 }
 
 export class VCP {
@@ -64,6 +65,7 @@ export class VCP {
   public mixedMeterValues: boolean = false;
   public sendMeterValues: boolean = true;
   public continueMeterValueFromPreviousTransaction: boolean = true;
+  public sendStopTransactionThenStatusNotification: boolean = true;
 
   constructor(public vcpOptions: VCPOptions) {
     this.messageHandler = resolveMessageHandler(vcpOptions.ocppVersion);
@@ -82,6 +84,7 @@ export class VCP {
     this.sendMeterValues = vcpOptions.sendMeterValues ?? true;
     this.mixedMeterValues = vcpOptions.mixedMeterValues ?? false;
     this.continueMeterValueFromPreviousTransaction = vcpOptions.continueMeterValueFromPreviousTransaction ?? true;
+    this.sendStopTransactionThenStatusNotification = vcpOptions.sendStopTransactionThenStatusNotification ?? true;
 
     if (vcpOptions.adminWsPort) {
       this.adminWs = new WebSocketServer({

@@ -43,6 +43,7 @@ export interface StartVcpRequestSchema {
   sendMeterValues: boolean;
   mixedMeterValues: boolean;
   continueMeterValueFromPreviousTransaction: boolean;
+  sendStopTransactionThenStatusNotification: boolean;
 }
 
 export enum StatusNotification {

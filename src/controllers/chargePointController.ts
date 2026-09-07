@@ -462,6 +462,7 @@ async function startMultipleVcps(payload: StartVcpRequestSchema) {
     sendMeterValues,
     mixedMeterValues,
     continueMeterValueFromPreviousTransaction,
+    sendStopTransactionThenStatusNotification,
   } = payload;
 
   const vcps: VCP[] = [];
@@ -483,6 +484,7 @@ async function startMultipleVcps(payload: StartVcpRequestSchema) {
       sendMeterValues,
       mixedMeterValues,
       continueMeterValueFromPreviousTransaction,
+      sendStopTransactionThenStatusNotification,
     });
 
     vcps.push(vcp);

@@ -142,6 +142,13 @@
                         <input type="checkbox" class="checkbox" id="testCharge" />
                       </div>
 
+                      <div class="flex items-center space-x-4">
+                        <label for="sendStopTransactionThenStatusNotification" class="label">
+                          Send Stop Transaction then Status Notification (turn off for Easee chargers)
+                        </label>
+                        <input type="checkbox" class="checkbox" id="sendStopTransactionThenStatusNotification" checked />
+                      </div>
+
                       <div class="auto-start-options">
                         <label class="block mb-2 label">Auto Start Charge Session Duration</label>
                         <input type="number" id="duration" class="w-full input" value="5" min="1" required />
@@ -608,6 +615,7 @@
             sendMeterValues: document.getElementById("sendMeterValues").checked,
             mixedMeterValues: document.getElementById("mixedMeterValues").checked,
             continueMeterValueFromPreviousTransaction: document.getElementById("continueMeterValueFromPreviousTransaction").checked,
+            sendStopTransactionThenStatusNotification: document.getElementById("sendStopTransactionThenStatusNotification").checked,
           });
         });
 
