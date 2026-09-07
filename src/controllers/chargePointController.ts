@@ -33,27 +33,10 @@ let dlmDevices: DlmDevice[] = [];
  * Injected into DlmDevice so the emulated site-meter feed reflects EV demand.
  */
 function totalChargerLoadWatts(): number {
-  let total = 0;
-  for (const vcp of vcpList) {
-    for (const connectorId of vcp.connectorIDs) {
-      if (connectorId === 0) continue;
-      const transactionId = transactionManager.getTransactionIdByVcp(
-        vcp,
-        connectorId,
-      );
-      if (!transactionId) continue;
-      const transaction = transactionManager.transactions.get(
-        transactionId.toString(),
-      );
-      if (!transaction || !transaction.active) continue;
-      const eff = resolveEffectiveLimit(vcp, connectorId, new Date(), {
-        transactionId,
-        transactionStartedAt: transaction.startedAt,
-      });
-      total += eff.unlimited ? vcp.power * 1000 : eff.limitWatts;
-    }
-  }
-  return total;
+  return vcpList.reduce(
+    (total, vcp) => total + transactionManager.getChargerLoadWatts(vcp),
+    0,
+  );
 }
 
 export const startVcp = async (

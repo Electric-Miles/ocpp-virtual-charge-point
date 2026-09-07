@@ -315,6 +315,35 @@ export class TransactionManager {
     return transaction.socValue;
   }
 
+  /**
+   * Live charging load (watts) for a VCP across its connectors: the active DLM
+   * limit where one applies, otherwise the charger's rated power. Feeds the
+   * emulated DLB site-meter reading and the DLM sweep script.
+   */
+  getChargerLoadWatts(vcp: VCP): number {
+    let total = 0;
+    
+    for (const connectorId of vcp.connectorIDs) {
+      if (connectorId === 0) continue;
+
+      const transactionId = this.getTransactionIdByVcp(vcp, connectorId);
+      
+      if (!transactionId) continue;
+      
+      const transaction = this.transactions.get(transactionId.toString());
+      
+      if (!transaction || !transaction.active) continue;
+      
+      const eff = resolveEffectiveLimit(vcp, connectorId, new Date(), {
+        transactionId,
+        transactionStartedAt: transaction.startedAt,
+      });
+      total += eff.unlimited ? vcp.power * 1000 : eff.limitWatts;
+    }
+
+    return total;
+  }
+
   getTransactionIdByVcp(vcp: VCP, connectorId: number = 1): number | undefined {
     return this.vcpTransactionMap.get(vcp.vcpOptions.chargePointId + connectorId);
   }
