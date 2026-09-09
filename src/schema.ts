@@ -160,6 +160,29 @@ export const StartDlmValidationSchema = {
     includeChargerLoad: { type: "boolean" },
     voltagePerPhase: { type: "number" },
     phases: { type: "number" },
+    reportIntervalMs: { type: "number" },
+    voltageSensePhases: { type: "number" },
+    phaseBalance: {
+      type: "array",
+      items: { type: "number" },
+      minItems: 3,
+      maxItems: 3,
+    },
+    unmeasuredPhaseOffsetsW: {
+      type: "array",
+      items: { type: "number" },
+      minItems: 3,
+      maxItems: 3,
+    },
+    quantisation: {
+      type: "object",
+      properties: {
+        powerW: { type: "number" },
+        currentA: { type: "number" },
+        voltageV: { type: "number" },
+      },
+    },
+    reportEnergyRegister: { type: "boolean" },
   },
 };
 
@@ -171,6 +194,12 @@ export interface StartDlmRequestSchema {
   includeChargerLoad?: boolean;
   voltagePerPhase?: number;
   phases?: number;
+  reportIntervalMs?: number;
+  voltageSensePhases?: number;
+  phaseBalance?: [number, number, number];
+  unmeasuredPhaseOffsetsW?: [number, number, number];
+  quantisation?: { powerW?: number; currentA?: number; voltageV?: number };
+  reportEnergyRegister?: boolean;
 }
 
 export const UpdateDlmValidationSchema = {

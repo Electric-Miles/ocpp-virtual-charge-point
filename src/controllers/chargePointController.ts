@@ -544,6 +544,12 @@ export const startDlmDevice = async (
     includeChargerLoad,
     voltagePerPhase,
     phases,
+    reportIntervalMs,
+    voltageSensePhases,
+    phaseBalance,
+    unmeasuredPhaseOffsetsW,
+    quantisation,
+    reportEnergyRegister,
   } = request.body;
 
   if (dlmDevices.find((d) => d.options.deviceId === deviceId)) {
@@ -570,6 +576,12 @@ export const startDlmDevice = async (
     includeChargerLoad: includeChargerLoad ?? true,
     voltagePerPhase,
     phases,
+    reportIntervalMs,
+    voltageSensePhases,
+    phaseBalance,
+    unmeasuredPhaseOffsetsW,
+    quantisation,
+    reportEnergyRegister,
     loadProvider: totalChargerLoadWatts,
   });
 
