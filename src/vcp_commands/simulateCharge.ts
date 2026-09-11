@@ -168,7 +168,12 @@ async function stopTransaction(vcp: VCP, connector: number) {
     payload: {
       transactionId: transId,
       timestamp: new Date(),
-      meterStop: 2000,
+      // Report the energy actually accrued for this transaction. A fixed value
+      // here goes backwards once a session passes it, which a CSMS reads as a
+      // negative energy delta.
+      meterStop: transId
+        ? Math.floor(transactionManager.getMeterValue(transId))
+        : 0,
     },
   }).then(() => console.log("StopTransaction is sent..."));
 }
