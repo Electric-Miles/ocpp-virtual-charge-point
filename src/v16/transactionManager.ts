@@ -59,6 +59,15 @@ export class TransactionManager {
     );
 
     if (vcp.sendMeterValues) {
+      // Send one sample straight away, like a real charger does at the start of
+      // a transaction. Without this a session shorter than the sample interval
+      // produces no MeterValues at all.
+      try {
+        this.emitMeterValues(vcp, state);
+      } catch (e) {
+        // websocket may not be open yet; the periodic timer will catch up
+      }
+
       state.meterValuesTimer = setInterval(() => {
         try {
           this.emitMeterValues(vcp, state);
