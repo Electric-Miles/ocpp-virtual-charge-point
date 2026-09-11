@@ -156,7 +156,7 @@ export const StartDlmValidationSchema = {
     endpoint: { type: "string" },
     deviceTypeId: { type: "string" },
     deviceId: { type: "string" },
-    baselineLoadWatts: { type: "number" },
+    nonChargerLoadWatts: { type: "number" },
     includeChargerLoad: { type: "boolean" },
     voltagePerPhase: { type: "number" },
     phases: { type: "number" },
@@ -190,7 +190,7 @@ export interface StartDlmRequestSchema {
   endpoint: string;
   deviceTypeId: string;
   deviceId: string;
-  baselineLoadWatts?: number;
+  nonChargerLoadWatts?: number;
   includeChargerLoad?: boolean;
   voltagePerPhase?: number;
   phases?: number;
@@ -207,13 +207,13 @@ export const UpdateDlmValidationSchema = {
   required: ["deviceId"],
   properties: {
     deviceId: { type: "string" },
-    baselineLoadWatts: { type: "number" },
+    nonChargerLoadWatts: { type: "number" },
   },
 };
 
 export interface UpdateDlmRequestSchema {
   deviceId: string;
-  baselineLoadWatts?: number;
+  nonChargerLoadWatts?: number;
 }
 
 export const StopDlmValidationSchema = {

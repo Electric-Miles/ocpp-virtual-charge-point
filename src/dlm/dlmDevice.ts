@@ -49,7 +49,7 @@ export interface DlmDeviceOptions {
   endpoint: string;
   deviceId: string;
   deviceTypeId: string;
-  baselineLoadWatts: number;
+  nonChargerLoadWatts: number;
   includeChargerLoad: boolean;
   voltagePerPhase?: number;
   phases?: number;
@@ -84,11 +84,11 @@ export class DlmDevice {
   private energyWh = 0;
   private lastAccrualAt = Date.now();
   private lastReading?: DlmReading;
-  public baselineLoadWatts: number;
+  public nonChargerLoadWatts: number;
   public connected = false;
 
   constructor(public options: DlmDeviceOptions) {
-    this.baselineLoadWatts = options.baselineLoadWatts;
+    this.nonChargerLoadWatts = options.nonChargerLoadWatts;
   }
 
   private get deviceType() {
@@ -186,7 +186,7 @@ export class DlmDevice {
       this.options.includeChargerLoad && this.options.loadProvider
         ? this.options.loadProvider()
         : 0;
-    const totalPowerW = Math.max(0, this.baselineLoadWatts + chargerLoad);
+    const totalPowerW = Math.max(0, this.nonChargerLoadWatts + chargerLoad);
 
     const now = Date.now();
     this.energyWh += totalPowerW * ((now - this.lastAccrualAt) / 3600000);
@@ -262,9 +262,9 @@ export class DlmDevice {
     this.ws.send(jsonMessage);
   }
 
-  /** Adjust the reported baseline site load live and push a reading immediately. */
-  updateBaseline(watts: number) {
-    this.baselineLoadWatts = watts;
+  /** Adjust the reported non-charger site load live and push a reading immediately. */
+  updateNonChargerLoad(watts: number) {
+    this.nonChargerLoadWatts = watts;
     try {
       this.sendReading();
     } catch (e) {
@@ -278,7 +278,7 @@ export class DlmDevice {
       deviceTypeId: this.options.deviceTypeId,
       endpoint: this.options.endpoint,
       connected: this.connected,
-      baselineLoadWatts: this.baselineLoadWatts,
+      nonChargerLoadWatts: this.nonChargerLoadWatts,
       includeChargerLoad: this.options.includeChargerLoad,
       lastReading: this.lastReading
         ? {

@@ -540,7 +540,7 @@ export const startDlmDevice = async (
     endpoint,
     deviceTypeId,
     deviceId,
-    baselineLoadWatts,
+    nonChargerLoadWatts,
     includeChargerLoad,
     voltagePerPhase,
     phases,
@@ -572,7 +572,7 @@ export const startDlmDevice = async (
     endpoint,
     deviceTypeId,
     deviceId,
-    baselineLoadWatts: baselineLoadWatts ?? 0,
+    nonChargerLoadWatts: nonChargerLoadWatts ?? 0,
     includeChargerLoad: includeChargerLoad ?? true,
     voltagePerPhase,
     phases,
@@ -607,15 +607,15 @@ export const updateDlmDevice = async (
   request: FastifyRequest<{ Body: UpdateDlmRequestSchema }>,
   reply: FastifyReply,
 ) => {
-  const { deviceId, baselineLoadWatts } = request.body;
+  const { deviceId, nonChargerLoadWatts } = request.body;
 
   const device = dlmDevices.find((d) => d.options.deviceId === deviceId);
   if (!device) {
     return reply.send({ status: "error", message: "DLM device not found" });
   }
 
-  if (baselineLoadWatts !== undefined) {
-    device.updateBaseline(baselineLoadWatts);
+  if (nonChargerLoadWatts !== undefined) {
+    device.updateNonChargerLoad(nonChargerLoadWatts);
   }
 
   return reply.send({

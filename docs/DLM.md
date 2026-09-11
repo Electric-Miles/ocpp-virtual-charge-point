@@ -78,24 +78,28 @@ The VCP can connect to the CSMS as a DLM/load-balancer device and stream site-me
 
 ### From the control UI
 
-**DLB Device** tab → pick **Endpoint**, **DLB Brand** (e.g. _Charge-M8_), **DLB Model** (e.g. _Charge-M8-Libra-DLB_), **Device ID** (e.g. `DLB0001`), **Baseline Site Load (kW)**, **Phases**, and whether to **include live charger load** in the reading → **Start DLB Device**. Then:
+**DLB Device** tab → pick **Endpoint**, **DLB Brand** (e.g. _Charge-M8_), **DLB Model** (e.g. _Charge-M8-Libra-DLB_), **Device ID** (e.g. `DLB0001`), **Site load excluding chargers (kW)**, **Phases**, and whether to **add live charger draw to the reading** → **Start DLB Device**. Then:
 
-- **Apply Load** pushes an updated baseline live — _this is the main test lever_: raise it to shrink available capacity → the platform sends lower `TxProfile`s → the chargers throttle (visible in their MeterValues/badge) → their reported load drops → the platform recalculates.
+`nonChargerLoadWatts` (the UI's **Site load excluding chargers**) is the site's non-charger consumption — what the building draws with no EVs plugged in. It is not a capacity or a limit; the reading the device sends is this plus the live charger load.
+
+`includeChargerLoad` adds what this process's VCP connectors are drawing right now — each active connector's effective profile limit, or its rated power if unlimited. That is what closes the loop: the platform throttles, the chargers draw less, the next reading drops. Turn it off to hold the meter at the non-charger figure regardless of charger behaviour. Chargers outside this process are never counted.
+
+- **Apply Load** pushes an updated non-charger load live — _this is the main test lever_: raise it to shrink available capacity → the platform sends lower `TxProfile`s → the chargers throttle (visible in their MeterValues/badge) → their reported load drops → the platform recalculates.
 - **Stop** disconnects the device; **Refresh status** shows the last reading sent.
 
 ### From the API
 
 ```bash
-# Start an emulated Charge-M8 Libra reporting a 10 kW baseline (3-phase),
-# including live charger draw in the reading
+# Start an emulated Charge-M8 Libra on a site drawing 10 kW outside the
+# chargers (3-phase), including live charger draw in the reading
 curl -s -X POST http://localhost:3000/api/vcp/dlm/start \
   -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
-  -d '{"endpoint":"wss://ocpp.test.electricmiles.io","deviceTypeId":"Charge-M8-Libra-DLB","deviceId":"DLB0001","baselineLoadWatts":10000,"includeChargerLoad":true,"phases":3}'
+  -d '{"endpoint":"wss://ocpp.test.electricmiles.io","deviceTypeId":"Charge-M8-Libra-DLB","deviceId":"DLB0001","nonChargerLoadWatts":10000,"includeChargerLoad":true,"phases":3}'
 
-# Drive the DLM: raise the reported baseline to 40 kW
+# Drive the DLM: raise the reported non-charger load to 40 kW
 curl -s -X POST http://localhost:3000/api/vcp/dlm/update \
   -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
-  -d '{"deviceId":"DLB0001","baselineLoadWatts":40000}'
+  -d '{"deviceId":"DLB0001","nonChargerLoadWatts":40000}'
 
 # Inspect / list types / stop
 curl -s http://localhost:3000/api/vcp/dlm/status  -H "Authorization: Bearer $TOKEN"
@@ -105,7 +109,7 @@ curl -s -X POST http://localhost:3000/api/vcp/dlm/stop \
   -d '{"deviceId":"DLB0001"}'   # omit deviceId to stop all
 ```
 
-`dlm/start` fields: `endpoint`, `deviceTypeId`, `deviceId` (required); `baselineLoadWatts` (default 0), `includeChargerLoad` (default true), `voltagePerPhase` (default 245), `phases` (default 3).
+`dlm/start` fields: `endpoint`, `deviceTypeId`, `deviceId` (required); `nonChargerLoadWatts` (default 0), `includeChargerLoad` (default true), `voltagePerPhase` (default 245), `phases` (default 3).
 
 Install-specific fields, all defaulting to what the observed Libra did (see below): `reportIntervalMs` (default 11000), `voltageSensePhases` (default 1), `phaseBalance` (default `[1.027,1.106,0.867]`), `unmeasuredPhaseOffsetsW` (default `[0,-30,0]`), `quantisation` (default `{powerW:30,currentA:0.3,voltageV:0.1}`; 0 disables a channel), `reportEnergyRegister` (default false).
 
@@ -137,7 +141,7 @@ Observed on this install, overridable (`dlm/start` field in brackets):
 - **Reporting interval** [`reportIntervalMs`, default 11000]. Observed gaps: 10 s ×64, 11 s ×171, 12 s ×8, 13 s ×5, 15 s ×1 (mean 10.8 s). A reporting interval is the kind of thing that is a device setting, and CSMS-side logs cannot separate the device's timer from delivery jitter anyway. Raise it past your platform's reading-staleness threshold to see what DLM does when a device goes quiet.
 - **Energy register** [`reportEnergyRegister`, default false]. `Energy.Active.Import.Register` is raw Wh, but this unit left it at **0** — 45 min at ~5 kW should have accrued ~3.7 kWh and it never moved. Whether that is firmware or configuration is not decidable from one sample, so set this true to report the emulator's accrual instead.
 
-The reported site load = `baselineLoadWatts` + (live charger load, if enabled), distributed across the configured phases per `phaseBalance`. The total is always preserved; only its split across phases changes.
+The reported site load = `nonChargerLoadWatts` + (live charger load, if enabled), distributed across the configured phases per `phaseBalance`. The total is always preserved; only its split across phases changes.
 
 **If DLM sizes on the worst phase, it has to read `Current.Import`.** The two observed traits compound badly for anything that reads `Power.Active.Import` instead:
 

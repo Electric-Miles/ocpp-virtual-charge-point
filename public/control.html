@@ -446,9 +446,9 @@
 
                   <div class="flex gap-4">
                     <div class="flex-1">
-                      <label class="block mb-2 label">Baseline Site Load (kW)</label>
-                      <input type="number" id="dlmBaselineKw" class="w-full input" value="10" min="0" step="0.1" />
-                      <span class="mt-0.5 block text-sm text-base-content/60">Raise this to shrink available capacity and drive the DLM</span>
+                      <label class="block mb-2 label">Site load excluding chargers (kW)</label>
+                      <input type="number" id="dlmNonChargerLoadKw" class="w-full input" value="10" min="0" step="0.1" />
+                      <span class="mt-0.5 block text-sm text-base-content/60">What the rest of the building is drawing, excluding the chargers. Raise it to force the DLM to throttle.</span>
                     </div>
                     <div class="w-32">
                       <label class="block mb-2 label">Phases</label>
@@ -459,9 +459,12 @@
                     </div>
                   </div>
 
-                  <div class="flex items-center space-x-4">
-                    <label for="dlmIncludeChargerLoad" class="label">Include live charger load in the reading</label>
-                    <input type="checkbox" class="checkbox" id="dlmIncludeChargerLoad" checked />
+                  <div>
+                    <div class="flex items-center space-x-4">
+                      <label for="dlmIncludeChargerLoad" class="label">Add live charger draw to the reading</label>
+                      <input type="checkbox" class="checkbox" id="dlmIncludeChargerLoad" checked />
+                    </div>
+                    <span class="mt-0.5 block text-sm text-base-content/60">Adds what this VCP's connectors are drawing right now, so throttling feeds back into the next reading.</span>
                   </div>
 
                   <div class="flex gap-3">
@@ -909,8 +912,8 @@
             endpoint: document.getElementById("dlmEndpoint").value,
             deviceTypeId: document.getElementById("dlmDeviceType").value,
             deviceId: document.getElementById("dlmDeviceId").value,
-            baselineLoadWatts:
-              Number(document.getElementById("dlmBaselineKw").value) * 1000,
+            nonChargerLoadWatts:
+              Number(document.getElementById("dlmNonChargerLoadKw").value) * 1000,
             includeChargerLoad: document.getElementById("dlmIncludeChargerLoad")
               .checked,
             phases: Number(document.getElementById("dlmPhases").value),
@@ -922,8 +925,8 @@
         .addEventListener("click", function () {
           sendRequest("/api/vcp/dlm/update", "POST", {
             deviceId: document.getElementById("dlmDeviceId").value,
-            baselineLoadWatts:
-              Number(document.getElementById("dlmBaselineKw").value) * 1000,
+            nonChargerLoadWatts:
+              Number(document.getElementById("dlmNonChargerLoadKw").value) * 1000,
           });
         });
 
