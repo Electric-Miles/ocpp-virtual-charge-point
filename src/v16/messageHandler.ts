@@ -160,7 +160,9 @@ const callHandlers: { [key: string]: CallHandler } = {
       }),
     );
 
-    if (!vcp.sendStopTransactionThenStatusNotification) {
+    // Default (true): StopTransaction first, then the connector reports Finishing.
+    // When false the Finishing/Available notifications were already sent above.
+    if (vcp.sendStopTransactionThenStatusNotification) {
       vcp.send(
           callFactory("StatusNotification", {
             connectorId: transaction.connectorId,
