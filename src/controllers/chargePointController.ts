@@ -473,8 +473,8 @@ async function startMultipleVcps(payload: StartVcpRequestSchema) {
     vcps.push(vcp);
 
     const task = (async () => {
-      await sleep(i * 300);
       await vcp.connect();
+      await sleep(i * 300);
       if (sendBootStatus) {
         await bootVCP(vcp);
       } else {

@@ -2,11 +2,8 @@ import * as uuid from "uuid";
 import { VCP } from "../vcp";
 import { sleep } from "../utils";
 
-export async function bootVCP(vcp: VCP, sleepTime: number = 500) {
-    console.log("loading VCP...");
-    console.log("Connector IDs:", vcp.connectorIDs);
-
-    //await sleep(500);
+export async function bootVCP(vcp: VCP) {
+    console.log("Loading VCP Connector IDs:", vcp.connectorIDs);
     await vcp.sendAndWait({
       messageId: uuid.v4(),
       action: "BootNotification",
@@ -18,10 +15,6 @@ export async function bootVCP(vcp: VCP, sleepTime: number = 500) {
       },
     });
     for (let connectorId of vcp.connectorIDs) {
-      console.log(
-        `Attempting to send StatusNotification for connectorId: ${connectorId}`,
-      );
-      //await sleep(sleepTime);
       await vcp.sendAndWait({
         messageId: uuid.v4(),
         action: "StatusNotification",
@@ -32,5 +25,4 @@ export async function bootVCP(vcp: VCP, sleepTime: number = 500) {
         },
       });
     }
-    console.log("VCP successfully loaded...");
 }
