@@ -9,7 +9,8 @@ import fastifyStatic from "@fastify/static";
 import path from "path";
 
 const app = fastify({
-  logger: true,
+  // logs every api request
+  // logger: true,
 });
 
 const host = process.env.HOST || "0.0.0.0";

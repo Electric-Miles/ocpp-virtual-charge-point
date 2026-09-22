@@ -23,6 +23,7 @@ export const StartVcpValidationSchema = {
     connectors: { type: "number" },
     numberOfPhases: { type: "number" },
     ocppVersion: { type: "string" },
+    startSoc: { type: "number" },
   },
 };
 
@@ -39,6 +40,7 @@ export interface StartVcpRequestSchema {
   power: number;
   numberOfPhases?: number;
   ocppVersion: OcppVersion;
+  startSoc?: number;
   model: string;
   sendMeterValues: boolean;
   mixedMeterValues: boolean;

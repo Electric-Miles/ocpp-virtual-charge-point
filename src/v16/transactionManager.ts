@@ -43,7 +43,7 @@ export class TransactionManager {
       startedAt: now,
       connectorId: connectorId,
       lastMeterValue: startMeter,
-      socValue: 10,
+      socValue: vcp.startSoc,
       power: vcp.power,
       vcp: vcp,
       energyWh: startMeter,
@@ -283,6 +283,10 @@ export class TransactionManager {
       return 0;
     }
 
+    if (transaction.socValue == 100) {
+      return transaction.lastMeterValue;
+    }
+
     // Advance the energy accumulator incrementally using the power currently
     // permitted by the effective DLM limit (falls back to the charger's rated
     // power when no limit applies). Incremental accrual keeps energy correct
@@ -300,25 +304,57 @@ export class TransactionManager {
     );
     const powerW = eff.unlimited ? transaction.power * 1000 : eff.limitWatts;
 
-    transaction.energyWh +=
-      powerW * ((now - transaction.lastAccrualAt) / 3600000);
+    // Above 60% SoC, real packs taper off charge current (CC-to-CV
+    // transition), so scale the accrual rate down linearly to 10% by 100%.
+    const TAPER_START_SOC = 60;
+    const TAPER_MIN_FACTOR = 0.1;
+    const taperFactor =
+      transaction.socValue > TAPER_START_SOC
+        ? Math.max(
+            TAPER_MIN_FACTOR,
+            1 -
+              ((transaction.socValue - TAPER_START_SOC) /
+                (100 - TAPER_START_SOC)) *
+                (1 - TAPER_MIN_FACTOR),
+          )
+        : 1;
+
+    let energyConsumed = powerW * taperFactor * ((now - transaction.lastAccrualAt) / 3600000);
+    transaction.energyWh += energyConsumed;
     transaction.lastAccrualAt = now;
     transaction.lastMeterValue = Math.floor(transaction.energyWh);
 
     console.log(`getMeterValue energy: ${transaction.lastMeterValue}`);
     console.log(`getMeterValue power (W): ${powerW}`);
+    console.log(`socValue: ${transaction.socValue}`);
+    console.log('taperFactor:', taperFactor);
+    console.log('energyConsumed:', energyConsumed);
+    console.log('eff:', eff);
+
     return transaction.lastMeterValue;
   }
 
   getSoCValue(transactionId: number) {
     const transaction = this.transactions.get(transactionId.toString());
     if (!transaction) {
-      return 10;
+      return 7;
     }
 
     transaction.socValue++;
     if (transaction.socValue > 100) {
       transaction.socValue = 100;
+    }
+
+    if (transaction.socValue === 100 && transaction.vcp.status === "Charging") {
+      setTimeout(() => {
+        transaction.vcp.send(
+          call("StatusNotification", {
+            connectorId: transaction.connectorId,
+            errorCode: "NoError",
+            status: "SuspendedEV",
+          }),
+        );
+      }, 1000);
     }
 
     return transaction.socValue;

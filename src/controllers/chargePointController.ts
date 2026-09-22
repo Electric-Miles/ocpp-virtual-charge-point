@@ -298,6 +298,8 @@ export const getConnectorStatus = async (
       numberPhases: eff.numberPhases,
       limitSource: eff.source ?? null,
       activeProfileCount: vcp.chargingProfiles.length,
+      lastMeterValue: transaction?.lastMeterValue ?? null,
+      socValue: transaction?.socValue ?? null,
     },
   });
 };
@@ -446,6 +448,7 @@ async function startMultipleVcps(payload: StartVcpRequestSchema) {
     mixedMeterValues,
     continueMeterValueFromPreviousTransaction,
     sendStopTransactionThenStatusNotification,
+    startSoc,
   } = payload;
 
   const vcps: VCP[] = [];
@@ -468,6 +471,7 @@ async function startMultipleVcps(payload: StartVcpRequestSchema) {
       mixedMeterValues,
       continueMeterValueFromPreviousTransaction,
       sendStopTransactionThenStatusNotification,
+      startSoc,
     });
 
     vcps.push(vcp);

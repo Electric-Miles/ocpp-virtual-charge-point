@@ -37,6 +37,7 @@ interface VCPOptions {
   model: string;
   power: number;
   numberOfPhases?: number; // 1 or 3; defaults based on power
+  startSoc?: number;
   sendMeterValues?: boolean;
   mixedMeterValues?: boolean;
   continueMeterValueFromPreviousTransaction?: boolean;
@@ -59,6 +60,7 @@ export class VCP {
   public lastCloseReason: string|null = null;
   public power: number;
   public numberOfPhases: number;
+  public startSoc: number;
   public chargingProfiles: StoredProfile[] = [];
   private heartbeatInterval ?:NodeJS.Timeout | string | number | undefined;
   private vendorConfig: Record<string, any> = {};
@@ -79,6 +81,7 @@ export class VCP {
     this.power = this.vcpOptions.power ?? 7;
     this.numberOfPhases =
       this.vcpOptions.numberOfPhases ?? (this.power > 7.4 ? 3 : 1);
+    this.startSoc = this.vcpOptions.startSoc ?? 10;
     this.vendor = getVendor(this.model);
     this.version = getFirmware(this.model);
     this.sendMeterValues = vcpOptions.sendMeterValues ?? true;

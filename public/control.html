@@ -79,6 +79,13 @@
                       </div>
 
                       <div>
+                        <label class="block mb-2 label">Starting SoC</label>
+                        <input type="number" id="startSoc" class="w-full input" min="0" value="10" />
+                        <span class="mt-0.5 block text-sm text-base-content/60">Charger energy taper at 60%. Connector goes into SuspendedEV when 100% is reached</span>
+
+                      </div>
+
+                      <div>
                         <label class="block mb-2 label">Phases</label>
                         <select id="numberOfPhases" class="w-full select">
                           <option value="1">Single-phase (L1)</option>
@@ -291,6 +298,7 @@
                     <div id="connectorStatusInline" class="hidden flex-1 flex items-center gap-2">
                       <span id="connectorStatusBadge" class="badge"></span>
                       <span id="connectorLimitBadge" class="badge badge-outline"></span>
+                      <span id="connectorMeterValueBadge" class="badge badge-outline"></span>
                     </div>
                     <button type="button" id="getConnectorStatusBtn" class="btn btn-sm btn-secondary">Get Status</button>
                     <button type="button" id="connectorActionBtn" class="hidden btn btn-sm btn-outline"></button>
@@ -617,6 +625,7 @@
             randomDelay: document.getElementById("randomDelay").checked,
             connectors: document.getElementById("connectors").value,
             power: document.getElementById("power").value,
+            startSoc: document.getElementById("startSoc").value,
             numberOfPhases: Number(document.getElementById("numberOfPhases").value),
             ocppVersion: document.getElementById("ocppVersion").value,
             model: document.getElementById("model").value,
@@ -685,8 +694,10 @@
         const data = await res.json();
         if (data.status !== "success") return;
 
-        const { connectorStatus, lastAction, appliedLimitAmps, limitSource } = data.data;
-        const badge = document.getElementById("connectorStatusBadge");
+
+        const { connectorStatus, lastAction, appliedLimitAmps, limitSource,
+          numberPhases, activeProfileCount, lastMeterValue, socValue  } = data.data;
+        let badge = document.getElementById("connectorStatusBadge");
         badge.textContent = connectorStatus;
         badge.className = "badge " + statusBadgeClass(connectorStatus);
         document.getElementById("connectorStatusInline").classList.remove("hidden");
@@ -701,6 +712,11 @@
           limitBadge.className = "badge badge-warning";
         }
 
+        if (lastMeterValue !== null) {
+          badge = document.getElementById("connectorMeterValueBadge");
+          badge.classList.remove("hidden");
+          badge.textContent = `MeterValue: ${lastMeterValue} Wh, SoC: ${socValue}%`;
+        }
         const actionBtn = document.getElementById("connectorActionBtn");
         actionBtn.classList.remove("hidden");
         if (connectorStatus === "Available") {
