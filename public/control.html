@@ -19,7 +19,7 @@
             </div>
             <div class="flex-none">
               <span id="first_name" class="text-white font-medium"></span>
-              <span id="version" class="text-white font-small">(v2.0.0)</span>
+              <span id="version" class="text-white font-small">(v2.1.0)</span>
               <button id="logout" class="btn btn-sm btn-primary">Log out</button>
             </div>
           </div>
@@ -211,8 +211,8 @@
                 </form>
               </div>
 
-              <!-- Change Status tab -->
-              <input type="radio" name="my_tabs_2" class="tab" aria-label="Change Status" />
+              <!-- Connector Status tab -->
+              <input type="radio" name="my_tabs_2" class="tab" aria-label="Connector Status" />
 
               <div id="changeStatus" class="tab-content bg-base-100 border-base-300 p-5">
                 <form id="changeStatusForm" class="space-y-4">
@@ -298,7 +298,7 @@
                     <div id="connectorStatusInline" class="hidden flex-1 flex items-center gap-2">
                       <span id="connectorStatusBadge" class="badge"></span>
                       <span id="connectorLimitBadge" class="badge badge-outline"></span>
-                      <span id="connectorMeterValueBadge" class="badge badge-outline"></span>
+                      <span id="connectorMeterValueBadge" class="badge badge-outline hidden"></span>
                     </div>
                     <button type="button" id="getConnectorStatusBtn" class="btn btn-sm btn-secondary">Get Status</button>
                     <button type="button" id="connectorActionBtn" class="hidden btn btn-sm btn-outline"></button>

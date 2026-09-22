@@ -291,7 +291,7 @@ export const getConnectorStatus = async (
     data: {
       chargePointId: vcp.vcpOptions.chargePointId,
       connectorId: cid,
-      connectorStatus: vcp.status,
+      connectorStatus: vcp.getStatus(cid),
       lastAction: vcp.lastAction,
       appliedLimitAmps: eff.unlimited ? null : Number(eff.limitAmps.toFixed(2)),
       appliedLimitWatts: eff.unlimited ? null : Math.round(eff.limitWatts),
@@ -381,9 +381,11 @@ export const getVcpStatus = async (
   const { verbose } = request.query;
   let response: any = {};
 
-  // count how many vcp in each status
+  // count how many connectors are in each status
   const statusCount = vcpList.reduce((acc: any, vcp: VCP) => {
-    acc[vcp.status] = (acc[vcp.status] || 0) + 1;
+    for (const status of vcp.connectorStatuses.values()) {
+      acc[status] = (acc[status] || 0) + 1;
+    }
     return acc;
   }, {});
 
@@ -419,7 +421,7 @@ export const getVcpStatus = async (
         isFinishing: vcp.isFinishing,
         isWaiting: vcp.isWaiting,
         lastAction: vcp.lastAction,
-        status: vcp.status,
+        connectorStatuses: Object.fromEntries(vcp.connectorStatuses),
         ...vcp.vcpOptions,
       };
     });
@@ -482,7 +484,7 @@ async function startMultipleVcps(payload: StartVcpRequestSchema) {
       if (sendBootStatus) {
         await bootVCP(vcp);
       } else {
-        vcp.status = "Available";
+        vcp.setAllStatuses("Available");
         vcp.configureHeartbeat(300_000);
       }
     })();

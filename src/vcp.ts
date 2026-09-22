@@ -53,7 +53,7 @@ export class VCP {
   public lastAction: string = "";
   public isTwinGun: boolean = false;
   public connectorIDs: number[];
-  public status: string;
+  public connectorStatuses: Map<number, string> = new Map();
   public model: string;
   public vendor: string;
   public version: string;
@@ -76,7 +76,9 @@ export class VCP {
     this.isTwinGun = this.vcpOptions.isTwinGun ?? false;
     this.connectorIDs =
       this.vcpOptions.connectorIds ?? this.initializeConnectorIDs();
-    this.status = "Unavailable";
+    for (const connectorId of this.connectorIDs) {
+      this.connectorStatuses.set(connectorId, "Unavailable");
+    }
     this.model = this.vcpOptions.model ?? VendorConfig.MODELS.EVC01;
     this.power = this.vcpOptions.power ?? 7;
     this.numberOfPhases =
@@ -175,7 +177,11 @@ export class VCP {
     this.lastAction = ocppCall.action;
 
     if (ocppCall.action === "StatusNotification") {
-      this.status = ocppCall.payload.status;
+      const connectorId = ocppCall.payload.connectorId;
+      const status = ocppCall.payload.status ?? ocppCall.payload.connectorStatus;
+      if (connectorId !== undefined && status !== undefined) {
+        this.setStatus(connectorId, status);
+      }
     }
 
     this.ws.send(jsonMessage);
@@ -325,11 +331,25 @@ export class VCP {
     // record reason (returned in Get Status) and try to reconnect
     this.lastCloseReason = `${code}=${reasonMessage}`;
 
-    this.status = 'Offline';
+    this.setAllStatuses('Offline');
 
     if (this.heartbeatInterval) {
       clearInterval(this.heartbeatInterval);
       this.heartbeatInterval = undefined;
+    }
+  }
+
+  getStatus(connectorId: number): string {
+    return this.connectorStatuses.get(connectorId) ?? "Unavailable";
+  }
+
+  setStatus(connectorId: number, status: string): void {
+    this.connectorStatuses.set(connectorId, status);
+  }
+
+  setAllStatuses(status: string): void {
+    for (const connectorId of this.connectorIDs) {
+      this.connectorStatuses.set(connectorId, status);
     }
   }
 

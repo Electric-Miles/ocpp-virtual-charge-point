@@ -345,7 +345,7 @@ export class TransactionManager {
       transaction.socValue = 100;
     }
 
-    if (transaction.socValue === 100 && transaction.vcp.status === "Charging") {
+    if (transaction.socValue === 100 && transaction.vcp.getStatus(transaction.connectorId) === "Charging") {
       setTimeout(() => {
         transaction.vcp.send(
           call("StatusNotification", {
