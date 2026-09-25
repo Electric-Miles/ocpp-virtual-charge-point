@@ -229,6 +229,32 @@ export interface StopDlmRequestSchema {
   deviceId?: string;
 }
 
+export const PayterTapValidationSchema = {
+  type: "object",
+  required: ["approved"],
+  properties: {
+    approved: { type: "boolean" },
+    maskedPan: { type: "string" },
+  },
+};
+
+export interface PayterTapRequestSchema {
+  approved: boolean;
+  maskedPan?: string;
+}
+
+export const PayterOnlineValidationSchema = {
+  type: "object",
+  required: ["online"],
+  properties: {
+    online: { type: "boolean" },
+  },
+};
+
+export interface PayterOnlineRequestSchema {
+  online: boolean;
+}
+
 export const LoginValidationSchema = {
   type: "object",
   required: ["email", "password"],

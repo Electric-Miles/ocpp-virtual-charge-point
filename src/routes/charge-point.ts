@@ -13,6 +13,11 @@ import {
     getDlmStatus,
 } from "../controllers/chargePointController";
 import {
+  listPayterTerminals,
+  setPayterTerminalOnline,
+  tapPayterCard,
+} from "../controllers/payterController";
+import {
   StartVcpValidationSchema,
   StopVcpValidationSchema,
   StatusValidationSchema,
@@ -22,6 +27,8 @@ import {
   StartDlmValidationSchema,
   UpdateDlmValidationSchema,
   StopDlmValidationSchema,
+  PayterTapValidationSchema,
+  PayterOnlineValidationSchema,
 } from "../schema";
 
 export async function chargePointRoutes(app: FastifyInstance) {
@@ -128,5 +135,28 @@ export async function chargePointRoutes(app: FastifyInstance) {
             preHandler: app.auth([app.verifyJwt]),
         },
         stopDlmDevice,
+    );
+    app.get(
+        "payter/terminals",
+        {
+            preHandler: app.auth([app.verifyJwt]),
+        },
+        listPayterTerminals,
+    );
+    app.post(
+        "payter/:serial/tap",
+        {
+            schema: { body: PayterTapValidationSchema },
+            preHandler: app.auth([app.verifyJwt]),
+        },
+        tapPayterCard,
+    );
+    app.post(
+        "payter/:serial/online",
+        {
+            schema: { body: PayterOnlineValidationSchema },
+            preHandler: app.auth([app.verifyJwt]),
+        },
+        setPayterTerminalOnline,
     );
 }

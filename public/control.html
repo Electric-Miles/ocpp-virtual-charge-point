@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Virtual Charge Point Control</title>
+    <title>VCP</title>
     <link href="https://cdn.jsdelivr.net/npm/daisyui@5" rel="stylesheet" type="text/css"/>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <link rel="stylesheet" href="/css/app.css">
@@ -11,7 +11,7 @@
   </head>
   <body class="bg-[#f4f4f4] min-h-full flex flex-col">
     <div class="flex-1">
-      <div class="max-w-screen-lg mx-auto p-5">
+      <div class="max-w-screen-xl mx-auto p-5">
         <div class="p-5 bg-white rounded-lg shadow-sm">
           <div class="navbar bg-primary rounded-lg">
             <div class="flex-1">
@@ -19,14 +19,12 @@
             </div>
             <div class="flex-none">
               <span id="first_name" class="text-white font-medium"></span>
-              <span id="version" class="text-white font-small">(v2.1.0)</span>
+              <span id="version" class="text-white font-small">(v2.2.0)</span>
               <button id="logout" class="btn btn-sm btn-primary">Log out</button>
             </div>
           </div>
 
           <div class="mt-5">
-            <h1 class="text-3xl">Virtual Charge Point Control</h1>
-            
             <div class="mt-5 tabs tabs-box">
 
               <!-- Start VCPs tab -->
@@ -501,6 +499,55 @@
                 </form>
               </div>
 
+              <!-- Payter Terminal tab -->
+              <input type="radio" name="my_tabs_2" class="tab" aria-label="Payter Terminal" />
+
+              <div id="payter" class="tab-content bg-base-100 border-base-300 p-5">
+                <p class="text-sm text-base-content/60">
+                  Emulates the Payter terminal platform that <code>PayterClient</code> calls (start / authorize /
+                  commit / cancel / stop / status), plus the physical terminal itself. Point the backend's
+                  <code>PAYTER_BASE_URL</code> at this VCP app's URL, then use the buttons below to simulate a
+                  customer tapping (or declining to tap) their card.
+                </p>
+
+                <div class="mt-4">
+                  <label class="block mb-2 label">Terminal Serial</label>
+                  <input type="text" id="payterSerial" class="w-full input" value="APO20245200042" placeholder="APO20245200042" />
+                </div>
+
+                <div class="flex items-center gap-3 mt-4 flex-wrap">
+                  <button type="button" id="payterWatchBtn" class="btn btn-sm btn-secondary">Watch Terminal</button>
+                  <button type="button" id="payterOnlineBtn" class="btn btn-sm btn-outline">Set Online</button>
+                  <span id="payterOnlineBadge" class="badge"></span>
+                </div>
+
+                <div id="payterSessionPanel" class="mt-4 hidden">
+                  <div class="flex items-center gap-2 flex-wrap">
+                    <span id="payterStatusBadge" class="badge"></span>
+                    <span id="payterAmountBadge" class="badge badge-outline"></span>
+                  </div>
+
+                  <div id="payterQrWrap" class="mt-3 hidden">
+                    <label class="block mb-1 label">QR content</label>
+                    <a id="payterQrLink" href="#" target="_blank" rel="noopener noreferrer" class="link link-primary block text-xs break-all"></a>
+                  </div>
+
+                  <div id="payterTapButtons" class="flex gap-3 mt-4 hidden">
+                    <button type="button" id="payterApproveBtn" class="btn btn-success flex-1">Tap Card (Approve)</button>
+                    <button type="button" id="payterDeclineBtn" class="btn btn-error flex-1">Tap Card (Decline)</button>
+                  </div>
+
+                  <pre id="payterSessionRaw" class="mt-4 text-xs"></pre>
+                </div>
+
+                <div class="divider"></div>
+
+                <div>
+                  <button type="button" id="payterRefreshAllBtn" class="btn btn-sm btn-secondary">Show All Terminals</button>
+                  <pre id="payterAllRaw" class="mt-2 text-xs"></pre>
+                </div>
+              </div>
+
             </div>
             <div class="divider"></div>
             <div>
@@ -558,6 +605,7 @@
               document.getElementById("chargePointId").value = chargePointId;
               document.getElementById("cmdChargePointId").value = chargePointId;
               document.getElementById("cpChargePointId").value = chargePointId;
+              document.getElementById("payterSerial").value = localStorage.getItem("payterSerial") || "";
               if (endpoint) {
                 document.getElementById("endpoint").value = endpoint;
                 const dlmEp = document.getElementById("dlmEndpoint");
@@ -960,8 +1008,132 @@
 
       loadDlmDeviceTypes();
 
+      // --- Payter Terminal emulation ---
+      let payterWatchInterval = null;
 
+      function payterHeaders() {
+        return {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("vcp_access_token")}`,
+        };
+      }
 
+      function payterStatusBadgeClass(status) {
+        return {
+          awaiting_card: "badge-warning",
+          authorized: "badge-success",
+          declined: "badge-error",
+          committed: "badge-success",
+          cancelled: "badge-neutral",
+          stopped: "badge-neutral",
+        }[status] || "badge-neutral";
+      }
+
+      document.getElementById("payterSerial").addEventListener("change", function () {
+        localStorage.setItem("payterSerial", this.value.trim());
+      });
+
+      async function fetchPayterTerminal() {
+        const serial = document.getElementById("payterSerial").value.trim();
+        if (!serial) return;
+
+        const res = await fetch("/api/vcp/payter/terminals", { headers: payterHeaders() });
+        const data = await res.json();
+        if (data.status !== "success") return;
+
+        const terminal = data.data.find((t) => t.serial === serial);
+        const online = terminal ? terminal.online : true;
+
+        const onlineBtn = document.getElementById("payterOnlineBtn");
+        const onlineBadge = document.getElementById("payterOnlineBadge");
+        onlineBadge.textContent = online ? "Online" : "Offline";
+        onlineBadge.className = "badge " + (online ? "badge-success" : "badge-neutral");
+        onlineBtn.textContent = online ? "Set Offline" : "Set Online";
+        onlineBtn.dataset.setOnline = online ? "false" : "true";
+
+        const panel = document.getElementById("payterSessionPanel");
+        const session = terminal ? terminal.session : null;
+
+        if (!session) {
+          panel.classList.add("hidden");
+          return;
+        }
+
+        panel.classList.remove("hidden");
+
+        const statusBadge = document.getElementById("payterStatusBadge");
+        statusBadge.textContent = session.status;
+        statusBadge.className = "badge " + payterStatusBadgeClass(session.status);
+
+        const amountBadge = document.getElementById("payterAmountBadge");
+        amountBadge.textContent = `£${(session.authorizedAmount / 100).toFixed(2)}` +
+          (session.commitAmount !== null ? ` (committed £${(session.commitAmount / 100).toFixed(2)})` : "");
+
+        const qrWrap = document.getElementById("payterQrWrap");
+        if (session.qr) {
+          qrWrap.classList.remove("hidden");
+          const qrLink = document.getElementById("payterQrLink");
+          qrLink.href = session.qr;
+          qrLink.textContent = session.qr;
+        } else {
+          qrWrap.classList.add("hidden");
+        }
+
+        document.getElementById("payterTapButtons").classList.toggle(
+          "hidden",
+          session.status !== "awaiting_card",
+        );
+
+        document.getElementById("payterSessionRaw").textContent = JSON.stringify(session, null, 2);
+      }
+
+      document.getElementById("payterWatchBtn").addEventListener("click", function () {
+        if (payterWatchInterval) {
+          clearInterval(payterWatchInterval);
+          payterWatchInterval = null;
+          this.textContent = "Watch Terminal";
+          this.classList.replace("btn-error", "btn-secondary");
+        } else {
+          fetchPayterTerminal();
+          payterWatchInterval = setInterval(fetchPayterTerminal, 1500);
+          this.textContent = "Stop Watching";
+          this.classList.replace("btn-secondary", "btn-error");
+        }
+      });
+
+      document.getElementById("payterOnlineBtn").addEventListener("click", async function () {
+        const serial = document.getElementById("payterSerial").value.trim();
+        if (!serial) return;
+
+        await fetch(`/api/vcp/payter/${encodeURIComponent(serial)}/online`, {
+          method: "POST",
+          headers: payterHeaders(),
+          body: JSON.stringify({ online: this.dataset.setOnline === "true" }),
+        });
+
+        fetchPayterTerminal();
+      });
+
+      async function payterTap(approved) {
+        const serial = document.getElementById("payterSerial").value.trim();
+        if (!serial) return;
+
+        await sendRequest(`/api/vcp/payter/${encodeURIComponent(serial)}/tap`, "POST", {
+          approved,
+          maskedPan: "512345******1234",
+        });
+
+        fetchPayterTerminal();
+      }
+
+      document.getElementById("payterApproveBtn").addEventListener("click", () => payterTap(true));
+      document.getElementById("payterDeclineBtn").addEventListener("click", () => payterTap(false));
+
+      document.getElementById("payterRefreshAllBtn").addEventListener("click", async function () {
+        const res = await fetch("/api/vcp/payter/terminals", { headers: payterHeaders() });
+        const data = await res.json();
+        document.getElementById("payterAllRaw").textContent = JSON.stringify(data.data ?? [], null, 2);
+      });
 
     </script>
   </body>

@@ -5,12 +5,13 @@ import { authRoutes } from "./routes/auth";
 import fastifyJwt from "@fastify/jwt";
 import fastifyAuth from "@fastify/auth";
 import { chargePointRoutes } from "./routes/charge-point";
+import { payterTerminalRoutes } from "./routes/payterTerminal";
 import fastifyStatic from "@fastify/static";
 import path from "path";
 
 const app = fastify({
   // logs every api request
-  // logger: true,
+  //logger: true,
 });
 
 const host = process.env.HOST || "0.0.0.0";
@@ -37,6 +38,10 @@ app
   .after(() => {
     app.register(chargePointRoutes, { prefix: "/api/vcp/" });
     app.register(authRoutes);
+    // No JWT auth here: these mirror Payter's own terminal API paths so
+    // backendEM's PayterClient can call this app directly, the same way it
+    // calls the real Payter platform.
+    app.register(payterTerminalRoutes);
 
     app.get("/control", async (request, reply) => {
       return reply.sendFile("control.html");
