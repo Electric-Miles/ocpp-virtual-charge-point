@@ -1,3 +1,4 @@
+import { PAYTER_COMMIT_MODES, PayterCommitMode } from "./payter/payterStore";
 import { OcppVersion } from "./ocppVersion";
 
 export const StartVcpValidationSchema = {
@@ -253,6 +254,18 @@ export const PayterOnlineValidationSchema = {
 
 export interface PayterOnlineRequestSchema {
   online: boolean;
+}
+
+export const PayterCommitModeValidationSchema = {
+  type: "object",
+  required: ["commitMode"],
+  properties: {
+    commitMode: { type: "string", enum: PAYTER_COMMIT_MODES },
+  },
+};
+
+export interface PayterCommitModeRequestSchema {
+  commitMode: PayterCommitMode;
 }
 
 export const LoginValidationSchema = {

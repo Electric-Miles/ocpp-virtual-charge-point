@@ -519,6 +519,15 @@
                   <button type="button" id="payterWatchBtn" class="btn btn-sm btn-secondary">Watch Terminal</button>
                   <button type="button" id="payterOnlineBtn" class="btn btn-sm btn-outline">Set Online</button>
                   <span id="payterOnlineBadge" class="badge"></span>
+                  <label class="flex items-center gap-2 text-sm">
+                    Commit response
+                    <select id="payterCommitMode" class="select select-sm w-auto">
+                      <option value="success">Success (200, COMMITED)</option>
+                      <option value="failed">Failed (200, state FAILED)</option>
+                      <option value="conflict">Conflict (409)</option>
+                      <option value="error">Server error (500)</option>
+                    </select>
+                  </label>
                 </div>
 
                 <div id="payterSessionPanel" class="mt-4 hidden">
@@ -535,6 +544,12 @@
                   <div id="payterTapButtons" class="flex gap-3 mt-4 hidden">
                     <button type="button" id="payterApproveBtn" class="btn btn-success flex-1">Tap Card (Approve)</button>
                     <button type="button" id="payterDeclineBtn" class="btn btn-error flex-1">Tap Card (Decline)</button>
+                  </div>
+
+                  <div id="payterCommitWrap" class="mt-4 hidden">
+                    <span class="text-sm font-semibold">Last commit response</span>
+                    <span id="payterCommitStatusBadge" class="badge badge-sm ml-2"></span>
+                    <pre id="payterCommitRaw" class="mt-1 text-xs"></pre>
                   </div>
 
                   <pre id="payterSessionRaw" class="mt-4 text-xs"></pre>
@@ -1024,6 +1039,7 @@
           authorized: "badge-success",
           declined: "badge-error",
           committed: "badge-success",
+          commit_failed: "badge-error",
           cancelled: "badge-neutral",
           stopped: "badge-neutral",
         }[status] || "badge-neutral";
@@ -1050,6 +1066,11 @@
         onlineBadge.className = "badge " + (online ? "badge-success" : "badge-neutral");
         onlineBtn.textContent = online ? "Set Offline" : "Set Online";
         onlineBtn.dataset.setOnline = online ? "false" : "true";
+
+        const commitModeSelect = document.getElementById("payterCommitMode");
+        if (document.activeElement !== commitModeSelect) {
+          commitModeSelect.value = terminal ? terminal.commitMode : "success";
+        }
 
         const panel = document.getElementById("payterSessionPanel");
         const session = terminal ? terminal.session : null;
@@ -1084,6 +1105,18 @@
           session.status !== "awaiting_card",
         );
 
+        const commitWrap = document.getElementById("payterCommitWrap");
+        const lastCommit = session.lastCommitResponse;
+        commitWrap.classList.toggle("hidden", !lastCommit);
+        if (lastCommit) {
+          const commitBadge = document.getElementById("payterCommitStatusBadge");
+          const ok = lastCommit.statusCode === 200 && lastCommit.body.state === "COMMITED";
+          commitBadge.textContent = `HTTP ${lastCommit.statusCode}` +
+            (lastCommit.body.state ? ` · ${lastCommit.body.state}` : "");
+          commitBadge.className = "badge badge-sm ml-2 " + (ok ? "badge-success" : "badge-error");
+          document.getElementById("payterCommitRaw").textContent = JSON.stringify(lastCommit.body, null, 2);
+        }
+
         document.getElementById("payterSessionRaw").textContent = JSON.stringify(session, null, 2);
       }
 
@@ -1109,6 +1142,19 @@
           method: "POST",
           headers: payterHeaders(),
           body: JSON.stringify({ online: this.dataset.setOnline === "true" }),
+        });
+
+        fetchPayterTerminal();
+      });
+
+      document.getElementById("payterCommitMode").addEventListener("change", async function () {
+        const serial = document.getElementById("payterSerial").value.trim();
+        if (!serial) return;
+
+        await fetch(`/api/vcp/payter/${encodeURIComponent(serial)}/commit-mode`, {
+          method: "POST",
+          headers: payterHeaders(),
+          body: JSON.stringify({ commitMode: this.value }),
         });
 
         fetchPayterTerminal();
