@@ -516,8 +516,9 @@
                 </div>
 
                 <div class="flex items-center gap-3 mt-4 flex-wrap">
-                  <button type="button" id="payterWatchBtn" class="btn btn-sm btn-secondary">Watch Terminal</button>
-                  <button type="button" id="payterOnlineBtn" class="btn btn-sm btn-outline">Set Online</button>
+                  <button type="button" id="payterWatchBtn" class="btn btn-sm btn-secondary">Start Terminal</button>
+                  <div id="payterControls" class="flex items-center gap-3 flex-wrap hidden">
+                  <button type="button" id="payterOnlineBtn" class="btn btn-sm btn-outline">Set Offline</button>
                   <span id="payterOnlineBadge" class="badge"></span>
                   <label class="flex items-center gap-2 text-sm">
                     Commit response
@@ -528,6 +529,7 @@
                       <option value="error">Server error (500)</option>
                     </select>
                   </label>
+                  </div>
                 </div>
 
                 <div id="payterSessionPanel" class="mt-4 hidden">
@@ -1120,18 +1122,40 @@
         document.getElementById("payterSessionRaw").textContent = JSON.stringify(session, null, 2);
       }
 
-      document.getElementById("payterWatchBtn").addEventListener("click", function () {
+      document.getElementById("payterWatchBtn").addEventListener("click", async function () {
+        const serialInput = document.getElementById("payterSerial");
+        const controls = document.getElementById("payterControls");
+
         if (payterWatchInterval) {
           clearInterval(payterWatchInterval);
           payterWatchInterval = null;
-          this.textContent = "Watch Terminal";
+          this.textContent = "Start Terminal";
           this.classList.replace("btn-error", "btn-secondary");
-        } else {
-          fetchPayterTerminal();
-          payterWatchInterval = setInterval(fetchPayterTerminal, 1500);
-          this.textContent = "Stop Watching";
-          this.classList.replace("btn-secondary", "btn-error");
+          serialInput.disabled = false;
+          controls.classList.add("hidden");
+          document.getElementById("payterSessionPanel").classList.add("hidden");
+          return;
         }
+
+        const serial = serialInput.value.trim();
+        if (!serial) return;
+
+        // Creates the terminal on the server if it doesn't exist yet, and
+        // brings it online so the backend sees it as available straight away.
+        await fetch(`/api/vcp/payter/${encodeURIComponent(serial)}/online`, {
+          method: "POST",
+          headers: payterHeaders(),
+          body: JSON.stringify({ online: true }),
+        });
+
+        // Lock the serial while watching so the controls can't drift onto a
+        // terminal that was never created/brought online.
+        serialInput.disabled = true;
+        controls.classList.remove("hidden");
+        await fetchPayterTerminal();
+        payterWatchInterval = setInterval(fetchPayterTerminal, 1500);
+        this.textContent = "Stop Watching";
+        this.classList.replace("btn-secondary", "btn-error");
       });
 
       document.getElementById("payterOnlineBtn").addEventListener("click", async function () {
@@ -1141,7 +1165,7 @@
         await fetch(`/api/vcp/payter/${encodeURIComponent(serial)}/online`, {
           method: "POST",
           headers: payterHeaders(),
-          body: JSON.stringify({ online: this.dataset.setOnline === "true" }),
+          body: JSON.stringify({ online: this.dataset.setOnline !== "false" }),
         });
 
         fetchPayterTerminal();
