@@ -374,6 +374,33 @@ export const setChargingProfile = async (
   });
 };
 
+// Current (or last finished) transaction per connector, keyed by connector id.
+// Connectors with no transaction are omitted. vcp and the timer handle are left
+// out as they aren't serializable.
+function getConnectorTransactions(vcp: VCP) {
+  const result: Record<number, object> = {};
+  for (const connectorId of vcp.connectorIDs) {
+    if (connectorId === 0) continue;
+    const transactionId = transactionManager.getTransactionIdByVcp(
+      vcp,
+      connectorId,
+    );
+    if (transactionId === undefined) continue;
+    const t = transactionManager.transactions.get(transactionId.toString());
+    if (!t) continue;
+    result[connectorId] = {
+      transactionId: t.transactionId,
+      active: t.active,
+      suspended: t.suspended,
+      startedAt: t.startedAt,
+      meterValue: t.lastMeterValue,
+      socValue: t.socValue,
+      power: t.power,
+    };
+  }
+  return result;
+}
+
 export const getVcpStatus = async (
   request: FastifyRequest<{ Querystring: StatusRequestSchema }>,
   reply: FastifyReply,
@@ -422,6 +449,7 @@ export const getVcpStatus = async (
         isWaiting: vcp.isWaiting,
         lastAction: vcp.lastAction,
         connectorStatuses: Object.fromEntries(vcp.connectorStatuses),
+        connectorTransactions: getConnectorTransactions(vcp),
         ...vcp.vcpOptions,
       };
     });

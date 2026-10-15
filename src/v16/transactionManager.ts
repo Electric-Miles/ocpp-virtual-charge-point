@@ -37,6 +37,17 @@ export class TransactionManager {
     const startMeter = this.getStartTransactionStartMeterValue(vcp, connectorId);
     const now = new Date();
 
+    // The previous transaction on this connector was only kept so its final
+    // meter value could seed this one (read above). Drop it now so finished
+    // transactions don't accumulate: at most one per connector is retained.
+    const previousId = this.getTransactionIdByVcp(vcp, connectorId);
+    if (previousId !== undefined) {
+      const previous = this.transactions.get(previousId.toString());
+      if (previous && !previous.active) {
+        this.transactions.delete(previousId.toString());
+      }
+    }
+
     const state: TransactionState = {
       transactionId: transactionId,
       meterValue: startMeter,

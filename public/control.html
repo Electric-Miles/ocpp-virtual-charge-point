@@ -19,7 +19,7 @@
             </div>
             <div class="flex-none">
               <span id="first_name" class="text-white font-medium"></span>
-              <span id="version" class="text-white font-small">(v2.2.0)</span>
+              <span id="version" class="text-white font-small">(v2.3.0)</span>
               <button id="logout" class="btn btn-sm btn-primary">Log out</button>
             </div>
           </div>
@@ -556,10 +556,15 @@
                   <div id="payterCommitWrap" class="mt-4 hidden">
                     <span class="text-sm font-semibold">Last commit response</span>
                     <span id="payterCommitStatusBadge" class="badge badge-sm ml-2"></span>
+                    <p id="payterCommitDesc" class="text-xs opacity-70"></p>
                     <pre id="payterCommitRaw" class="mt-1 text-xs"></pre>
                   </div>
 
-                  <pre id="payterSessionRaw" class="mt-4 text-xs"></pre>
+                  <p class="mt-4 text-xs opacity-70">
+                    Emulator's current session state for this terminal: built from the backend's /start request,
+                    then updated by the card tap, callback, /authorize and /commit calls.
+                  </p>
+                  <pre id="payterSessionRaw" class="mt-1 text-xs"></pre>
                 </div>
 
                 <div class="divider"></div>
@@ -574,7 +579,7 @@
             <div class="divider"></div>
             <div>
               <h2>Response</h2>
-              <pre id="response"></pre>
+              <pre id="response" class="mt-2 text-xs"></pre>
             </div>
           </div>
         </div>
@@ -1122,6 +1127,10 @@
           commitBadge.textContent = `HTTP ${lastCommit.statusCode}` +
             (lastCommit.body.state ? ` · ${lastCommit.body.state}` : "");
           commitBadge.className = "badge badge-sm ml-2 " + (ok ? "badge-success" : "badge-error");
+          document.getElementById("payterCommitDesc").textContent =
+            `Response body (HTTP ${lastCommit.statusCode}) returned to the backend's ` +
+            `POST /terminals/${serial}/sessions/${session.sessionId}/commit` +
+            ` - most recent commit only`;
           document.getElementById("payterCommitRaw").textContent = JSON.stringify(lastCommit.body, null, 2);
         }
 
