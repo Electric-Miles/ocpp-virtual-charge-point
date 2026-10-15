@@ -103,10 +103,14 @@ export const tapPayterCard = async (
   reply: FastifyReply,
 ) => {
   const { serial } = request.params;
-  const { approved, maskedPan } = request.body;
+  const { approved, maskedPan, authorizeFails } = request.body;
 
   try {
-    const session = await simulateTap(serial, { approved, maskedPan });
+    const session = await simulateTap(serial, {
+      approved,
+      maskedPan,
+      authorizeFails,
+    });
     return reply.send({ status: "success", data: session });
   } catch (e) {
     return reply.send({ status: "error", message: (e as Error).message });

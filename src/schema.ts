@@ -236,11 +236,13 @@ export const PayterTapValidationSchema = {
   properties: {
     approved: { type: "boolean" },
     maskedPan: { type: "string" },
+    authorizeFails: { type: "boolean" },
   },
 };
 
 export interface PayterTapRequestSchema {
   approved: boolean;
+  authorizeFails?: boolean;
   maskedPan?: string;
 }
 

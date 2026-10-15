@@ -521,13 +521,17 @@
                   <button type="button" id="payterOnlineBtn" class="btn btn-sm btn-outline">Set Offline</button>
                   <span id="payterOnlineBadge" class="badge"></span>
                   <label class="flex items-center gap-2 text-sm">
-                    Commit response
+                    Commit response:
                     <select id="payterCommitMode" class="select select-sm w-auto">
                       <option value="success">Success (200, COMMITED)</option>
                       <option value="failed">Failed (200, state FAILED)</option>
                       <option value="conflict">Conflict (409)</option>
                       <option value="error">Server error (500)</option>
                     </select>
+                  </label>
+                  <label class="flex items-center gap-2 text-sm">
+                    Card number:
+                    <input type="text" id="payterCardNumber" class="input input-sm w-48" value="512345******1234" placeholder="512345******1234" />
                   </label>
                   </div>
                 </div>
@@ -546,6 +550,7 @@
                   <div id="payterTapButtons" class="flex gap-3 mt-4 hidden">
                     <button type="button" id="payterApproveBtn" class="btn btn-success flex-1">Tap Card (Approve)</button>
                     <button type="button" id="payterDeclineBtn" class="btn btn-error flex-1">Tap Card (Decline)</button>
+                    <button type="button" id="payterAuthFailBtn" class="btn btn-warning flex-1">Tap Card (Decline Authorise)</button>
                   </div>
 
                   <div id="payterCommitWrap" class="mt-4 hidden">
@@ -1040,6 +1045,7 @@
           awaiting_card: "badge-warning",
           authorized: "badge-success",
           declined: "badge-error",
+          authorize_failed: "badge-error",
           committed: "badge-success",
           commit_failed: "badge-error",
           cancelled: "badge-neutral",
@@ -1184,13 +1190,14 @@
         fetchPayterTerminal();
       });
 
-      async function payterTap(approved) {
+      async function payterTap(approved, authorizeFails = false) {
         const serial = document.getElementById("payterSerial").value.trim();
         if (!serial) return;
 
         await sendRequest(`/api/vcp/payter/${encodeURIComponent(serial)}/tap`, "POST", {
           approved,
-          maskedPan: "512345******1234",
+          authorizeFails,
+          maskedPan: document.getElementById("payterCardNumber").value.trim() || "512345******1234",
         });
 
         fetchPayterTerminal();
@@ -1198,6 +1205,7 @@
 
       document.getElementById("payterApproveBtn").addEventListener("click", () => payterTap(true));
       document.getElementById("payterDeclineBtn").addEventListener("click", () => payterTap(false));
+      document.getElementById("payterAuthFailBtn").addEventListener("click", () => payterTap(true, true));
 
       document.getElementById("payterRefreshAllBtn").addEventListener("click", async function () {
         const res = await fetch("/api/vcp/payter/terminals", { headers: payterHeaders() });

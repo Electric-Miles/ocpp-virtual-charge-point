@@ -4,6 +4,7 @@ export type PayterSessionStatus =
   | "awaiting_card"
   | "authorized"
   | "declined"
+  | "authorize_failed"
   | "committed"
   | "commit_failed"
   | "cancelled"
@@ -128,7 +129,11 @@ export function startSession(
  */
 export async function simulateTap(
   serial: string,
-  { approved, maskedPan }: { approved: boolean; maskedPan?: string },
+  {
+    approved,
+    maskedPan,
+    authorizeFails,
+  }: { approved: boolean; maskedPan?: string; authorizeFails?: boolean },
 ): Promise<PayterSession> {
   const terminal = getTerminal(serial);
   const session = terminal.session;
@@ -136,7 +141,9 @@ export async function simulateTap(
     throw new Error(`No pending session for terminal ${serial}`);
   }
 
-  session.status = approved ? "authorized" : "declined";
+  // authorizeFails: the tap succeeds and the callback carries a sessionId, but
+  // the backend's later call to /authorize gets a FAILED response.
+  session.status = !approved ? "declined" : authorizeFails ? "authorize_failed" : "authorized";
   session.maskedPan = maskedPan || "512345******1234";
   session.updatedAt = Date.now();
 
