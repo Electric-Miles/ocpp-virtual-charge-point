@@ -5,8 +5,11 @@ import {
   commitSession,
   getTerminal,
   listTerminals,
+  terminalBody,
+  selectUiItem,
   setCommitMode,
   setOnline,
+  showUi,
   simulateTap,
   startSession,
   stopSession,
@@ -14,6 +17,7 @@ import {
 import {
   PayterCommitModeRequestSchema,
   PayterOnlineRequestSchema,
+  PayterSelectRequestSchema,
   PayterTapRequestSchema,
 } from "../schema";
 
@@ -67,7 +71,14 @@ export const payterGetStatus = async (
   reply: FastifyReply,
 ) => {
   const terminal = getTerminal(request.params.serial);
-  return reply.send({ online: terminal.online });
+  return reply.send(terminalBody(terminal));
+};
+
+export const payterListTerminals = async (
+  _request: FastifyRequest,
+  reply: FastifyReply,
+) => {
+  return reply.send(listTerminals().map(terminalBody));
 };
 
 export const payterStop = async (
@@ -83,6 +94,26 @@ export const payterCancel = async (
 ) => {
   const { terminalId, sessionId } = request.params;
   return reply.send(cancelSession(terminalId, sessionId));
+};
+
+export const payterUi = async (
+  request: FastifyRequest<{
+    Params: { serial: string };
+    Querystring: { callbackUrl?: string };
+    Body: { id?: string; type?: string; properties?: Record<string, unknown> };
+  }>,
+  reply: FastifyReply,
+) => {
+  const { serial } = request.params;
+  const body = request.body ?? {};
+
+  showUi(serial, {
+    id: body.id ?? "",
+    properties: { ...body.properties, type: body.properties?.type ?? body.type },
+    callbackUrl: request.query.callbackUrl ?? "",
+  });
+
+  return reply.send({});
 };
 
 // --- Admin endpoints for the control.html Payter tab. JWT-protected like the
@@ -139,4 +170,19 @@ export const setPayterCommitMode = async (
   const { serial } = request.params;
   const terminal = setCommitMode(serial, request.body.commitMode);
   return reply.send({ status: "success", data: terminal });
+};
+
+export const selectPayterUiItem = async (
+  request: FastifyRequest<{
+    Params: { serial: string };
+    Body: PayterSelectRequestSchema;
+  }>,
+  reply: FastifyReply,
+) => {
+  try {
+    const ui = await selectUiItem(request.params.serial, request.body.key);
+    return reply.send({ status: "success", data: ui });
+  } catch (e) {
+    return reply.send({ status: "error", message: (e as Error).message });
+  }
 };

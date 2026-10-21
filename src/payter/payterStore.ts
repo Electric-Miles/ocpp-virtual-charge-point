@@ -58,11 +58,29 @@ export interface PayterCardDetails {
   merchantReference: string;
 }
 
+export interface PayterUiItem {
+  key: string;
+  label: string;
+  amount?: string;
+}
+
+/** The last screen the backend posted to POST /terminals/{serial}/ui. */
+export interface PayterUiScreen {
+  id: string;
+  type: string;
+  title: string;
+  items: PayterUiItem[];
+  callbackUrl: string;
+  callbackResult: string | null;
+  receivedAt: number;
+}
+
 export interface PayterTerminal {
   serial: string;
   online: boolean;
   commitMode: PayterCommitMode;
   session: PayterSession | null;
+  ui: PayterUiScreen | null;
 }
 
 const terminals = new Map<string, PayterTerminal>();
@@ -71,10 +89,42 @@ let terminalTxnCounter = 1000;
 export function getTerminal(serial: string): PayterTerminal {
   let terminal = terminals.get(serial);
   if (!terminal) {
-    terminal = { serial, online: true, commitMode: "success", session: null };
+    terminal = { serial, online: true, commitMode: "success", session: null, ui: null };
     terminals.set(serial, terminal);
   }
   return terminal;
+}
+
+export type PayterTerminalState =
+  | "IDLE"
+  | "READING"
+  | "CARD"
+  | "STOPPING"
+  | "AUTHORIZING";
+
+/** Payter's `Terminal` body, as returned by GET /terminals and /terminals/{serial}. */
+export function terminalBody(terminal: PayterTerminal) {
+  let state: PayterTerminalState = "IDLE";
+  switch (terminal.session?.status) {
+    case "awaiting_card":
+      state = "READING";
+      break;
+    case "authorized":
+      state = "CARD";
+      break;
+  }
+
+  // Stable fake 8-digit terminal id derived from the serial.
+  let hash = 0;
+  for (const ch of terminal.serial) hash = (hash * 31 + ch.charCodeAt(0)) % 90_000_000;
+
+  return {
+    serialNumber: terminal.serial,
+    terminalName: terminal.serial,
+    terminalIds: [String(10_000_000 + hash)],
+    online: terminal.online,
+    state,
+  };
 }
 
 export function listTerminals(): PayterTerminal[] {
@@ -347,4 +397,84 @@ export function stopSession(terminalId: string) {
   }
 
   return response;
+}
+
+/**
+ * Stores the screen posted to /terminals/{serial}/ui. Selection items arrive
+ * flattened as `items.{key}.label` / `items.{key}.amount` properties.
+ */
+export function showUi(
+  serial: string,
+  data: {
+    id: string;
+    properties: Record<string, unknown>;
+    callbackUrl: string;
+  },
+): PayterUiScreen {
+  const { properties } = data;
+  const items = new Map<string, PayterUiItem>();
+  for (const [name, value] of Object.entries(properties)) {
+    const match = /^items\.([^.]+)\.(label|amount)$/.exec(name);
+    if (!match) continue;
+    const item = items.get(match[1]) ?? { key: match[1], label: "" };
+    if (match[2] === "label") item.label = String(value);
+    else item.amount = String(value);
+    items.set(match[1], item);
+  }
+
+  const terminal = getTerminal(serial);
+  terminal.ui = {
+    id: data.id,
+    type: String(properties.type ?? ""),
+    title: String(properties.title ?? ""),
+    items: [...items.values()],
+    callbackUrl: data.callbackUrl,
+    callbackResult: null,
+    receivedAt: Date.now(),
+  };
+  return terminal.ui;
+}
+
+/**
+ * Simulates the driver tapping an item on the current screen: POSTs
+ * {serialNumber, screenId, response} to the callbackUrl the backend gave us.
+ */
+export async function selectUiItem(
+  serial: string,
+  key: string,
+): Promise<PayterUiScreen> {
+  const ui = getTerminal(serial).ui;
+  if (!ui) {
+    throw new Error(`No screen displayed on terminal ${serial}`);
+  }
+  if (!ui.items.some((item) => item.key === key)) {
+    throw new Error(`Item ${key} is not on the current screen`);
+  }
+  if (!ui.callbackUrl) {
+    throw new Error("Screen was posted without a callbackUrl");
+  }
+
+  try {
+    const res = await fetch(ui.callbackUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        serialNumber: serial,
+        screenId: ui.id,
+        response: key,
+      }),
+    });
+    ui.callbackResult = `${res.status} ${res.statusText}: ${await res.text()}`;
+  } catch (e) {
+    ui.callbackResult = `error: ${(e as Error).message}`;
+  }
+
+  // The screen is dismissed once an item is tapped. If the backend re-showed a
+  // screen while handling the callback (invalid tap), it has replaced `ui`, so
+  // leave that one alone.
+  const terminal = getTerminal(serial);
+  if (terminal.ui === ui) {
+    terminal.ui = null;
+  }
+  return ui;
 }

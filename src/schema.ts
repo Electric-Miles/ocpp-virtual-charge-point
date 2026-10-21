@@ -270,6 +270,18 @@ export interface PayterCommitModeRequestSchema {
   commitMode: PayterCommitMode;
 }
 
+export const PayterSelectValidationSchema = {
+  type: "object",
+  required: ["key"],
+  properties: {
+    key: { type: "string" },
+  },
+};
+
+export interface PayterSelectRequestSchema {
+  key: string;
+}
+
 export const LoginValidationSchema = {
   type: "object",
   required: ["email", "password"],

@@ -4,8 +4,10 @@ import {
   payterCancel,
   payterCommit,
   payterGetStatus,
+  payterListTerminals,
   payterStart,
   payterStop,
+  payterUi,
 } from "../controllers/payterController";
 
 /**
@@ -38,6 +40,8 @@ export async function payterTerminalRoutes(app: FastifyInstance) {
   app.post("/terminals/:serial/start", payterStart);
   app.post("/terminals/:serial/authorize", payterAuthorize);
   app.post("/terminals/:serial/sessions/:sessionId/commit", payterCommit);
+  app.post("/terminals/:serial/ui", payterUi);
+  app.get("/terminals", payterListTerminals);
   app.get("/terminals/:serial", payterGetStatus);
   app.post("/terminals/:terminalId/stop", payterStop);
   app.post("/terminals/:terminalId/sessions/:sessionId/cancel", payterCancel);

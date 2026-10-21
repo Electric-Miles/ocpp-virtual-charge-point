@@ -14,6 +14,7 @@ import {
 } from "../controllers/chargePointController";
 import {
   listPayterTerminals,
+  selectPayterUiItem,
   setPayterCommitMode,
   setPayterTerminalOnline,
   tapPayterCard,
@@ -31,6 +32,7 @@ import {
   PayterTapValidationSchema,
   PayterOnlineValidationSchema,
   PayterCommitModeValidationSchema,
+  PayterSelectValidationSchema,
 } from "../schema";
 
 export async function chargePointRoutes(app: FastifyInstance) {
@@ -168,5 +170,13 @@ export async function chargePointRoutes(app: FastifyInstance) {
             preHandler: app.auth([app.verifyJwt]),
         },
         setPayterCommitMode,
+    );
+    app.post(
+        "payter/:serial/ui/select",
+        {
+            schema: { body: PayterSelectValidationSchema },
+            preHandler: app.auth([app.verifyJwt]),
+        },
+        selectPayterUiItem,
     );
 }

@@ -536,6 +536,12 @@
                   </div>
                 </div>
 
+                <div id="payterUiPanel" class="mt-4 hidden">
+                  <label class="block mb-1 label font-semibold" id="payterUiTitle"></label>
+                  <div id="payterUiItems" class="flex flex-col gap-2 max-w-xs"></div>
+                  <p id="payterUiResult" class="mt-2 text-xs opacity-70 break-all"></p>
+                </div>
+
                 <div id="payterSessionPanel" class="mt-4 hidden">
                   <div class="flex items-center gap-2 flex-wrap">
                     <span id="payterStatusBadge" class="badge"></span>
@@ -1062,6 +1068,44 @@
         localStorage.setItem("payterSerial", this.value.trim());
       });
 
+      let payterUiRendered = null;
+
+      function renderPayterUi(ui) {
+        const panel = document.getElementById("payterUiPanel");
+        panel.classList.toggle("hidden", !ui);
+        if (!ui) {
+          payterUiRendered = null;
+          return;
+        }
+
+        document.getElementById("payterUiResult").textContent = ui.callbackResult
+          ? `Last callback response: ${ui.callbackResult}` : "";
+
+        // Rebuild buttons only when a new screen arrives.
+        if (payterUiRendered === ui.id + ui.receivedAt) return;
+        payterUiRendered = ui.id + ui.receivedAt;
+
+        document.getElementById("payterUiTitle").textContent = ui.title;
+        const list = document.getElementById("payterUiItems");
+        list.replaceChildren();
+        for (const item of ui.items) {
+          const btn = document.createElement("button");
+          btn.type = "button";
+          btn.className = "btn btn-outline justify-start";
+          btn.textContent = item.amount ? `${item.label} - ${item.amount}` : item.label;
+          btn.title = `key ${item.key}`;
+          btn.addEventListener("click", () => payterSelect(item.key));
+          list.appendChild(btn);
+        }
+      }
+
+      async function payterSelect(key) {
+        const serial = document.getElementById("payterSerial").value.trim();
+        if (!serial) return;
+        await sendRequest(`/api/vcp/payter/${encodeURIComponent(serial)}/ui/select`, "POST", { key });
+        fetchPayterTerminal();
+      }
+
       async function fetchPayterTerminal() {
         const serial = document.getElementById("payterSerial").value.trim();
         if (!serial) return;
@@ -1084,6 +1128,8 @@
         if (document.activeElement !== commitModeSelect) {
           commitModeSelect.value = terminal ? terminal.commitMode : "success";
         }
+
+        renderPayterUi(terminal ? terminal.ui : null);
 
         const panel = document.getElementById("payterSessionPanel");
         const session = terminal ? terminal.session : null;
