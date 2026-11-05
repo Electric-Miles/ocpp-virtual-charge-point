@@ -124,6 +124,22 @@ export interface ConnectorStatusRequestSchema {
   connectorId?: number;
 }
 
+export const SetSocValidationSchema = {
+  type: "object",
+  required: ["chargePointId", "soc"],
+  properties: {
+    chargePointId: { type: "string" },
+    connectorId: { type: "integer" },
+    soc: { type: "number", minimum: 0, maximum: 100 },
+  },
+};
+
+export interface SetSocRequestSchema {
+  chargePointId: string;
+  connectorId?: number;
+  soc: number;
+}
+
 export const SetChargingProfileValidationSchema = {
   type: "object",
   required: ["chargePointId"],

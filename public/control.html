@@ -298,8 +298,15 @@
                       <span id="connectorLimitBadge" class="badge badge-outline"></span>
                       <span id="connectorMeterValueBadge" class="badge badge-outline hidden"></span>
                     </div>
-                    <button type="button" id="getConnectorStatusBtn" class="btn btn-sm btn-secondary">Get Status</button>
                     <button type="button" id="connectorActionBtn" class="hidden btn btn-sm btn-outline"></button>
+                    <button type="button" id="connectorStartBtn" class="hidden btn btn-sm btn-success">Start Charge</button>
+                    <button type="button" id="connectorStopBtn" class="hidden btn btn-sm btn-error">Stop</button>
+                  </div>
+
+                  <div class="flex items-center gap-3">
+                    <label class="label" for="socInput">SoC %</label>
+                    <input type="number" id="socInput" class="input input-sm w-24" min="0" max="100" value="50" />
+                    <button type="button" id="setSocBtn" class="btn btn-sm btn-secondary">Set SoC</button>
                   </div>
                 </form>
               </div>
@@ -692,7 +699,9 @@
 
           localStorage.setItem("endpoint", endpoint);
 
-          document.getElementById("statusChargePointId").value =chargePointId;
+          document.getElementById("statusChargePointId").value = chargePointId;
+          document.getElementById("cmdChargePointId").value = chargePointId;
+          document.getElementById("cpChargePointId").value = chargePointId;
           document.getElementById("vcpId").value = chargePointId;
 
           sendRequest("/api/vcp/start", "POST", {
@@ -754,13 +763,44 @@
         sendRequest(`/api/vcp/status?verbose=${verbose}`, "GET");
       });
 
-      // Connector status polling
+      // Connector status polling: runs only while the Connector Status tab is
+      // showing, stops when the VCP isn't started, until a new ID is entered.
       let connectorStatusInterval = null;
 
       function statusBadgeClass(status) {
         return { Available: "badge-success", Charging: "badge-info", Preparing: "badge-warning",
                  Faulted: "badge-error", Finishing: "badge-warning", SuspendedEV: "badge-warning",
                  SuspendedEVSE: "badge-warning", Unavailable: "badge-neutral", Offline: "badge-neutral" }[status] || "badge-neutral";
+      }
+
+      function connectorTabActive() {
+        return document.querySelector('input[name="my_tabs_2"][aria-label="Connector Status"]').checked;
+      }
+
+      function stopConnectorPolling() {
+        if (connectorStatusInterval) {
+          clearInterval(connectorStatusInterval);
+          connectorStatusInterval = null;
+        }
+      }
+
+      function startConnectorPolling() {
+        stopConnectorPolling();
+        if (!connectorTabActive() || !document.getElementById("statusChargePointId").value) return;
+        fetchConnectorStatus();
+        connectorStatusInterval = setInterval(fetchConnectorStatus, 3000);
+      }
+
+      function showConnectorNotStarted() {
+        const badge = document.getElementById("connectorStatusBadge");
+        badge.textContent = "VCP not started";
+        badge.className = "badge badge-neutral";
+        document.getElementById("connectorStatusInline").classList.remove("hidden");
+        document.getElementById("connectorLimitBadge").className = "badge badge-outline hidden";
+        document.getElementById("connectorMeterValueBadge").classList.add("hidden");
+        document.getElementById("connectorActionBtn").classList.add("hidden");
+        document.getElementById("connectorStopBtn").classList.add("hidden");
+        document.getElementById("connectorStartBtn").classList.add("hidden");
       }
 
       async function fetchConnectorStatus() {
@@ -773,8 +813,14 @@
           { headers: { "Content-Type": "application/json", Authorization: `Bearer ${localStorage.getItem("vcp_access_token")}` } }
         );
         const data = await res.json();
-        if (data.status !== "success") return;
-
+        // ignore a response for an ID that has since been changed
+        if (chargePointId !== document.getElementById("statusChargePointId").value) return;
+        if (data.status !== "success") {
+          // VCP not started: stop polling until a new Charge Point ID is entered
+          stopConnectorPolling();
+          showConnectorNotStarted();
+          return;
+        }
 
         const { connectorStatus, lastAction, appliedLimitAmps, limitSource,
           numberPhases, activeProfileCount, lastMeterValue, socValue  } = data.data;
@@ -793,10 +839,12 @@
           limitBadge.className = "badge badge-warning";
         }
 
+        badge = document.getElementById("connectorMeterValueBadge");
         if (lastMeterValue !== null) {
-          badge = document.getElementById("connectorMeterValueBadge");
           badge.classList.remove("hidden");
           badge.textContent = `MeterValue: ${lastMeterValue} Wh, SoC: ${socValue}%`;
+        } else {
+          badge.classList.add("hidden");
         }
         const actionBtn = document.getElementById("connectorActionBtn");
         actionBtn.classList.remove("hidden");
@@ -807,26 +855,95 @@
           actionBtn.textContent = "Unplug";
           actionBtn.dataset.targetStatus = "Available";
         }
+        const showStop = ["Charging", "SuspendedEV", "SuspendedEVSE"].includes(connectorStatus);
+        document.getElementById("connectorStopBtn").classList.toggle("hidden", !showStop);
+        document.getElementById("connectorStartBtn").classList.toggle("hidden", connectorStatus !== "Preparing");
+        if (showStop) actionBtn.classList.add("hidden");
       }
 
-      document.getElementById("getConnectorStatusBtn").addEventListener("click", function () {
-        if (connectorStatusInterval) {
-          clearInterval(connectorStatusInterval);
-          connectorStatusInterval = null;
-          this.textContent = "Get Status";
-          this.classList.replace("btn-error", "btn-secondary");
-        } else {
-          fetchConnectorStatus();
-          connectorStatusInterval = setInterval(fetchConnectorStatus, 3000);
-          this.textContent = "Stop Refreshing";
-          this.classList.replace("btn-secondary", "btn-error");
-        }
+      // Start/stop polling as the tab is shown/hidden
+      document.querySelectorAll('input[name="my_tabs_2"]').forEach((radio) => {
+        radio.addEventListener("change", () => {
+          if (connectorTabActive()) startConnectorPolling();
+          else stopConnectorPolling();
+        });
+      });
+
+      document.getElementById("connectorId").addEventListener("change", startConnectorPolling);
+
+      document.getElementById("setSocBtn").addEventListener("click", async function () {
+        await sendRequest("/api/vcp/set-soc", "POST", {
+          chargePointId: document.getElementById("statusChargePointId").value,
+          connectorId: Number(document.getElementById("connectorId").value),
+          soc: Number(document.getElementById("socInput").value),
+        });
+        fetchConnectorStatus();
+      });
+
+      // Keep every Charge Point ID field in sync when the user leaves any of them
+      const chargePointIdFields = ["chargePointId", "vcpId", "statusChargePointId", "cmdChargePointId", "cpChargePointId"];
+      chargePointIdFields.forEach((id) => {
+        document.getElementById(id).addEventListener("change", function () {
+          const value = this.value;
+          chargePointIdFields.forEach((other) => {
+            document.getElementById(other).value = value;
+          });
+          if (value) localStorage.setItem("chargePointId", value);
+          if (connectorTabActive()) startConnectorPolling();
+        });
       });
 
       document.getElementById("connectorActionBtn").addEventListener("click", function () {
         document.getElementById("status").value = this.dataset.targetStatus;
         document.getElementById("errorCode").value = "NoError";
         document.getElementById("changeStatusForm").dispatchEvent(new Event("submit"));
+      });
+
+      document.getElementById("connectorStartBtn").addEventListener("click", async function () {
+        const chargePointId = document.getElementById("statusChargePointId").value;
+        const connectorId = Number(document.getElementById("connectorId").value);
+        this.disabled = true;
+        try {
+          await sendRequest("/api/vcp/send-command", "POST", {
+            chargePointId,
+            action: "StartTransaction",
+            payload: {
+              idTag: document.getElementById("cmdIdTag").value || "freevenIdTag",
+              connectorId,
+              meterStart: 0,
+              timestamp: new Date(),
+            },
+          });
+          await sendRequest("/api/vcp/change-status", "POST", {
+            chargePointId,
+            action: "StatusNotification",
+            payload: { connectorId, status: "Charging", errorCode: "NoError" },
+          });
+        } finally {
+          this.disabled = false;
+          fetchConnectorStatus();
+        }
+      });
+
+      document.getElementById("connectorStopBtn").addEventListener("click", async function () {
+        const chargePointId = document.getElementById("statusChargePointId").value;
+        const connectorId = Number(document.getElementById("connectorId").value);
+        this.disabled = true;
+        try {
+          await sendRequest("/api/vcp/send-command", "POST", {
+            chargePointId,
+            action: "StopTransaction",
+            payload: { connectorId, timestamp: new Date() },
+          });
+          await sendRequest("/api/vcp/change-status", "POST", {
+            chargePointId,
+            action: "StatusNotification",
+            payload: { connectorId, status: "Finishing", errorCode: "NoError" },
+          });
+        } finally {
+          this.disabled = false;
+          fetchConnectorStatus();
+        }
       });
 
       document.getElementById("logout").addEventListener("click", (event) => {

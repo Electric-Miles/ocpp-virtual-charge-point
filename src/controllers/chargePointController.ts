@@ -8,6 +8,7 @@ import {
   ChangeVcpStatusRequestSchema,
   ConnectorStatusRequestSchema,
   SetChargingProfileRequestSchema,
+  SetSocRequestSchema,
   StartDlmRequestSchema,
   StartVcpRequestSchema,
   StatusRequestSchema,
@@ -246,6 +247,10 @@ export const sendCommand = async (
       return reply.send({ status: "error", message: "Transaction not found" });
     }
     delete payload.connectorId;
+    payload.meterStop ??= Math.floor(
+      transactionManager.getMeterValue(payload.transactionId),
+    );
+    payload.timestamp ??= new Date();
     requestJson = vcp.send({
       action,
       messageId: uuid(),
@@ -301,6 +306,39 @@ export const getConnectorStatus = async (
       lastMeterValue: transaction?.lastMeterValue ?? null,
       socValue: transaction?.socValue ?? null,
     },
+  });
+};
+
+export const setSoc = async (
+  request: FastifyRequest<{ Body: SetSocRequestSchema }>,
+  reply: FastifyReply,
+) => {
+  const { chargePointId, connectorId, soc } = request.body;
+
+  const vcp = vcpList.find(
+    (v: VCP) => v.vcpOptions.chargePointId === chargePointId,
+  );
+
+  if (!vcp) {
+    return reply.send({ status: "error", message: "VCP not found" });
+  }
+
+  const value = Math.round(soc);
+  // used by transactions started from now on
+  vcp.startSoc = value;
+
+  const cid = connectorId ?? 1;
+  const transactionId = transactionManager.getTransactionIdByVcp(vcp, cid);
+  const transaction = transactionId
+    ? transactionManager.transactions.get(transactionId.toString())
+    : undefined;
+  if (transaction?.active) {
+    transaction.socValue = value;
+  }
+
+  return reply.send({
+    status: "success",
+    message: `SoC set to ${value}%`,
   });
 };
 

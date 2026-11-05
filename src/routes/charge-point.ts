@@ -4,6 +4,7 @@ import {
     stopVcp,
     getVcpStatus,
     getConnectorStatus,
+    setSoc,
     changeVcpStatus, sendCommand,
     setChargingProfile,
     getDlmDeviceTypes,
@@ -25,6 +26,7 @@ import {
   StatusValidationSchema,
   ChangeVcpStatusValidationSchema,
   ConnectorStatusValidationSchema,
+  SetSocValidationSchema,
   SetChargingProfileValidationSchema,
   StartDlmValidationSchema,
   UpdateDlmValidationSchema,
@@ -73,6 +75,14 @@ export async function chargePointRoutes(app: FastifyInstance) {
       preHandler: app.auth([app.verifyJwt]),
     },
     changeVcpStatus,
+  );
+  app.post(
+    "set-soc",
+    {
+      schema: { body: SetSocValidationSchema },
+      preHandler: app.auth([app.verifyJwt]),
+    },
+    setSoc,
   );
   app.get(
     "connector-status",
